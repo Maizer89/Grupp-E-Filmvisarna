@@ -79,8 +79,8 @@ app.post("/api/bookings", async (req, res) => {
   let connection;
 
   try {
-    connection = await db.getConnection(); //Lånar anslutning från MySQL pool
-    await connection.beginTransaction(); //Påbörjar en transaktion
+    connection = await db.getConnection(); // Gets a connection from the MySQL connection pool
+    await connection.beginTransaction(); // Starts a transaction
     const [screenings] = await connection.query(
       "SELECT id, auditorium_id FROM screenings WHERE id = ?",
       [screeningId],
@@ -115,15 +115,51 @@ app.post("/api/bookings", async (req, res) => {
         error: "En eller flera biljettyper är ogiltiga",
       });
     }
+    // Lock selected seats during the transaction to prevent double bookings
+    const sortedSeatIds = [...seatIds].sort((a, b) => a - b);
+    const placeholders = sortedSeatIds.map(() => "?").join(",");
 
-    await connection.rollback(); //Ångrar databasändringar om något går fel
+    await connection.query(
+      `SELECT id
+      FROM seats
+      WHERE id IN (${placeholders})
+      ORDER BY id
+      FOR UPDATE`,
+      sortedSeatIds,
+    );
+
+    const [occupiedSeats] = await connection.query(
+      `SELECT tickets.seat_id
+      FROM tickets
+      JOIN bookings ON tickets.booking_id = bookings.id
+      WHERE bookings.screening_id = ?
+      AND tickets.seat_id IN (${placeholders})
+      AND (
+        bookings.status = 'confirmed'
+        OR (
+          bookings.status = 'pending'
+          AND bookings.reserved_until > NOW()
+        )
+      )`,
+      [screeningId, ...sortedSeatIds],
+    );
+
+    if (occupiedSeats.length > 0) {
+      await connection.rollback();
+
+      return res.status(409).json({
+        error: "En eller flera valda stolar är redan bokade eller reserverade",
+      });
+    }
+
+    await connection.rollback();
 
     res.status(501).json({
       message: "Visning hittad. Bokningen är ännu inte implementerad",
     });
   } catch (error) {
     if (connection) {
-      await connection.rollback(); //Ångrar databasändringar om något går fel
+      await connection.rollback(); // Reverts database changes if something goes wrong
     }
 
     console.error(error);
