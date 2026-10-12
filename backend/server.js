@@ -76,8 +76,12 @@ app.post("/api/bookings", async (req, res) => {
     });
   }
 
+  let connection;
+
   try {
-    const [screenings] = await db.query(
+    connection = await db.getConnection(); //Lånar anslutning från MySQL pool
+    await connection.beginTransaction(); //Påbörjar en transaktion
+    const [screenings] = await connection.query(
       "SELECT id, auditorium_id FROM screenings WHERE id = ?",
       [screeningId],
     );
@@ -88,15 +92,49 @@ app.post("/api/bookings", async (req, res) => {
       });
     }
 
+    const [validSeats] = await connection.query(
+      "SELECT id FROM seats WHERE auditorium_id = ? AND id IN (?)",
+      [screenings[0].auditorium_id, seatIds],
+    );
+
+    if (validSeats.length !== seatIds.length) {
+      return res.status(400).json({
+        error: "En eller flera stolar tillhör inte visningens salong",
+      });
+    }
+
+    const ticketTypeIds = [...new Set(seats.map((seat) => seat.ticketTypeId))];
+
+    const [validTicketTypes] = await connection.query(
+      "SELECT id FROM ticket_types WHERE id IN (?)",
+      [ticketTypeIds],
+    );
+
+    if (validTicketTypes.length !== ticketTypeIds.length) {
+      return res.status(400).json({
+        error: "En eller flera biljettyper är ogiltiga",
+      });
+    }
+
+    await connection.rollback(); //Ångrar databasändringar om något går fel
+
     res.status(501).json({
       message: "Visning hittad. Bokningen är ännu inte implementerad",
     });
   } catch (error) {
+    if (connection) {
+      await connection.rollback(); //Ångrar databasändringar om något går fel
+    }
+
     console.error(error);
 
     res.status(500).json({
       error: "Kunde inte skapa bokningen",
     });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 });
 
