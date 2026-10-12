@@ -30,7 +30,29 @@ app.get("/api/screenings/:id/seats", async (req, res) => {
       [screeningId],
     );
 
-    res.json(seats);
+    const [occupiedSeats] = await db.query(
+      `SELECT tickets.seat_id
+      FROM tickets
+      JOIN bookings ON tickets.booking_id = bookings.id
+      WHERE bookings.screening_id = ?
+        AND (
+          bookings.status = 'confirmed'
+          OR (
+            bookings.status = 'pending'
+            AND bookings.reserved_until > NOW()
+          )
+        )`,
+      [screeningId],
+    );
+
+    const occupiedSeatIds = new Set(occupiedSeats.map((seat) => seat.seat_id));
+
+    const seatsWithAvailability = seats.map((seat) => ({
+      ...seat,
+      isAvailable: !occupiedSeatIds.has(seat.id),
+    }));
+
+    res.json(seatsWithAvailability);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Kunde inte hämta stolar" });
