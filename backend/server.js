@@ -1,5 +1,6 @@
 import express from "express";
 import db from "./db.js";
+import { randomUUID } from "node:crypto";
 
 const app = express();
 const PORT = 3000;
@@ -80,6 +81,9 @@ app.post("/api/bookings", async (req, res) => {
 
   try {
     connection = await db.getConnection(); // Gets a connection from the MySQL connection pool
+
+    await connection.query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+
     await connection.beginTransaction(); // Starts a transaction
     const [screenings] = await connection.query(
       "SELECT id, auditorium_id FROM screenings WHERE id = ?",
@@ -152,10 +156,34 @@ app.post("/api/bookings", async (req, res) => {
       });
     }
 
-    await connection.rollback();
+    const bookingId = randomUUID();
+    const reservationMinutes = 10;
 
-    res.status(501).json({
-      message: "Visning hittad. Bokningen är ännu inte implementerad",
+    await connection.query(
+      `INSERT INTO bookings (
+        id,
+        screening_id,
+        customer_email,
+        status,
+        reserved_until
+      )
+      VALUES (?, ?, ?, 'pending', DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
+      [bookingId, screeningId, customerEmail, reservationMinutes],
+    );
+
+    for (const seat of seats) {
+      await connection.query(
+        `INSERT INTO tickets (booking_id, seat_id, ticket_type_id)
+        VALUES (?, ?, ?)`,
+        [bookingId, seat.seatId, seat.ticketTypeId],
+      );
+    }
+
+    await connection.commit();
+
+    return res.status(201).json({
+      message: "Bokningen har skapats",
+      bookingId,
     });
   } catch (error) {
     if (connection) {
