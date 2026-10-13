@@ -113,6 +113,8 @@ app.post("/api/bookings", async (req, res) => {
     );
 
     if (screenings.length === 0) {
+      await connection.rollback();
+
       return res.status(404).json({
         error: "Visningen hittades inte",
       });
@@ -124,6 +126,8 @@ app.post("/api/bookings", async (req, res) => {
     );
 
     if (validSeats.length !== seatIds.length) {
+      await connection.rollback();
+
       return res.status(400).json({
         error: "En eller flera stolar tillhör inte visningens salong",
       });
@@ -137,6 +141,8 @@ app.post("/api/bookings", async (req, res) => {
     );
 
     if (validTicketTypes.length !== ticketTypeIds.length) {
+      await connection.rollback();
+
       return res.status(400).json({
         error: "En eller flera biljettyper är ogiltiga",
       });
