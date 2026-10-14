@@ -1,6 +1,7 @@
 import express from "express";
 import db from "./db.js";
 import { randomUUID } from "node:crypto";
+import { expirePendingBookings } from "./jobs/expireBookings.js";
 
 const app = express();
 const PORT = 3000;
@@ -229,6 +230,43 @@ app.post("/api/bookings", async (req, res) => {
     }
   }
 });
+
+app.patch("/api/bookings/:id/confirm", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.query(
+      `UPDATE bookings
+   SET status = 'confirmed',
+       reserved_until = NULL
+   WHERE id = ?
+     AND status = 'pending'
+     AND reserved_until > NOW()`,
+      [id],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(409).json({
+        error:
+          "Bokningen kan inte bekräftas eller reservationstiden har gått ut",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Bokningen har bekräftats",
+      bookingId: id,
+    });
+  } catch (error) {
+    console.error("Error confirming booking", error);
+
+    return res.status(500).json({
+      error: "Kunde inte bekräfta bokningen",
+    });
+  }
+});
+
+// Check for expired bookings every minute
+setInterval(expirePendingBookings, 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
