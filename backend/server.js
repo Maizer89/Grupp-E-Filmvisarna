@@ -1,6 +1,7 @@
 import express from "express";
 import db from "./db.js";
 import { randomUUID } from "node:crypto";
+import { expirePendingBookings } from "./jobs/expireBookings.js";
 
 const app = express();
 const PORT = 3000;
@@ -263,6 +264,9 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
     });
   }
 });
+
+// Check for expired bookings every minute
+setInterval(expirePendingBookings, 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
