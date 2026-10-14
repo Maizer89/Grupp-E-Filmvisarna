@@ -10,6 +10,20 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+app.get("/api/movies", async (req, res) => {
+  try {
+    const [movies] = await db.query("SELECT * FROM movies");
+
+    return res.status(200).json(movies);
+  } catch (error) {
+    console.error("Error fetching movies:", error);
+
+    return res.status(500).json({
+      error: "Kunde inte hämta filmerna",
+    });
+  }
+});
+
 // US-4: Hämta en specifik film
 app.get("/api/movies/:id", async (req, res) => {
   const { id } = req.params;
@@ -61,6 +75,7 @@ app.get("/api/screenings", async (req, res) => {
     res.status(500).json({ error: "Kunde inte hämta visningar" });
   }
 });
+
 app.get("/api/screenings/:id/seats", async (req, res) => {
   const screeningId = req.params.id;
 
