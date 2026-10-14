@@ -221,8 +221,9 @@ app.post("/api/bookings", async (req, res) => {
 
     const ticketTypeIds = [...new Set(seats.map((seat) => seat.ticketTypeId))];
 
+    // US-10: Hämta biljettyper och priser från databasen
     const [validTicketTypes] = await connection.query(
-      "SELECT id FROM ticket_types WHERE id IN (?)",
+      "SELECT id, price FROM ticket_types WHERE id IN (?)",
       [ticketTypeIds],
     );
 
@@ -233,6 +234,16 @@ app.post("/api/bookings", async (req, res) => {
         error: "En eller flera biljettyper är ogiltiga",
       });
     }
+
+    // US-10: Beräkna totalpriset utifrån valda biljettyper
+    const ticketPrices = new Map(
+      validTicketTypes.map((ticketType) => [ticketType.id, ticketType.price])
+    );
+
+    const totalPrice = seats.reduce((total, seat) => {
+      return total + ticketPrices.get(seat.ticketTypeId);
+    }, 0);
+    
     // Lock selected seats during the transaction to prevent double bookings
     const sortedSeatIds = [...seatIds].sort((a, b) => a - b);
     const placeholders = sortedSeatIds.map(() => "?").join(",");
@@ -298,6 +309,7 @@ app.post("/api/bookings", async (req, res) => {
     return res.status(201).json({
       message: "Bokningen har skapats",
       bookingId,
+      totalPrice,
     });
   } catch (error) {
     if (connection) {
