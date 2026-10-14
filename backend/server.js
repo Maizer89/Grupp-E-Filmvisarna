@@ -10,6 +10,23 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// US-10: Hämta biljettyper och priser
+app.get("/api/ticket-types", async (req, res) => {
+  try {
+    const [ticketTypes] = await db.query(
+      "SELECT id, name, price FROM ticket_types ORDER BY id"
+    );
+  
+    return res.status(200).json(ticketTypes);
+  } catch (error) {
+    console.error("Fel vid hämtning av biljettpriser:", error);
+
+    return res.status(500).json({
+      error: "Kunde inte hämta biljettpriser",
+    });
+  }
+});
+
 app.get("/api/movies", async (req, res) => {
   try {
     const [movies] = await db.query("SELECT * FROM movies");
