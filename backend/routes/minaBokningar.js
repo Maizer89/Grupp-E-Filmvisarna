@@ -1,5 +1,5 @@
 import { Router } from "express";
-import db from "./db.js";
+import db from "../db.js";
 import { inloggadAnvandare, INTE_INLOGGAD } from "./konto.js";
 
 // USER  18: se mina bokningar och bokningshistorik.   USER STORY 15: avboka en framtida bokning.
@@ -11,7 +11,8 @@ const BARA_FRAMTIDA = "Bara framtida bokningar kan avbokas";
 const AVBOKAD = "Bokningen är avbokad";
 
 const router = Router();
-const fel = (res, status, meddelande) => res.status(status).json({ error: meddelande });
+const fel = (res, status, meddelande) =>
+  res.status(status).json({ error: meddelande });
 const tvaSiffror = (n) => String(n).padStart(2, "0");
 
 // Date -> "2026-10-16T18:00:00" (lokal tid, så att sidorna kan visa tiden som den är)
@@ -25,17 +26,27 @@ router.get("/my-bookings", async (req, res) => {
   if (!anvandare) return fel(res, 401, INTE_INLOGGAD);
 
   const [rader] = await db.query(
-    `SELECT b.bookingNumber, m.title, s.startTime, a.name AS auditorium,
-            GROUP_CONCAT(bs.seatLabel ORDER BY bs.seatLabel SEPARATOR ',') AS seats
-     FROM bookings b
-     JOIN screenings s ON s.id = b.screeningId
-     JOIN movies m ON m.id = s.movieId
-     JOIN auditoriums a ON a.id = s.auditoriumId
-     LEFT JOIN bookedSeats bs ON bs.bookingId = b.id
-     WHERE b.customerEmail = ?
-     GROUP BY b.id, b.bookingNumber, m.title, s.startTime, a.name
-     ORDER BY s.startTime`,
-    [anvandare.email]
+    `SELECT
+    b.id AS bookingNumber,
+    m.title,
+    s.start_time AS startTime,
+    a.name AS auditorium,
+    GROUP_CONCAT(
+      CONCAT('Rad ', st.row_number, ' Plats ', st.seat_number)
+      ORDER BY st.row_number, st.seat_number
+      SEPARATOR ','
+    ) AS seats
+  FROM bookings b
+  JOIN screenings s ON s.id = b.screening_id
+  JOIN movies m ON m.id = s.movie_id
+  JOIN auditoriums a ON a.id = s.auditorium_id
+  LEFT JOIN tickets t ON t.booking_id = b.id
+  LEFT JOIN seats st ON st.id = t.seat_id
+  WHERE b.customer_email = ?
+    AND b.status = 'confirmed'
+  GROUP BY b.id, m.title, s.start_time, a.name
+  ORDER BY s.start_time`,
+    [anvandare.email],
   );
 
   const nu = Date.now();
@@ -51,7 +62,10 @@ router.get("/my-bookings", async (req, res) => {
 
   res.json({
     upcoming: alla.filter((b) => b._tid > nu).map(utan),
-    history: alla.filter((b) => b._tid <= nu).reverse().map(utan),
+    history: alla
+      .filter((b) => b._tid <= nu)
+      .reverse()
+      .map(utan),
   });
 });
 
@@ -61,28 +75,32 @@ router.delete("/my-bookings/:bookingNumber", async (req, res) => {
   if (!anvandare) return fel(res, 401, INTE_INLOGGAD);
 
   const [rader] = await db.query(
-    `SELECT b.id, s.startTime FROM bookings b
-     JOIN screenings s ON s.id = b.screeningId
-     WHERE b.bookingNumber = ? AND b.customerEmail = ?`,
-    [req.params.bookingNumber, anvandare.email]
+    `SELECT b.id, s.start_time AS startTime
+   FROM bookings b
+   JOIN screenings s ON s.id = b.screening_id
+   WHERE b.id = ?
+     AND b.customer_email = ?
+     AND b.status = 'confirmed'`,
+    [req.params.bookingNumber, anvandare.email],
   );
 
   // 404 både när numret saknas och när bokningen tillhör någon annan
   if (rader.length === 0) return fel(res, 404, BOKNING_SAKNAS);
-  if (new Date(rader[0].startTime).getTime() <= Date.now()) return fel(res, 409, BARA_FRAMTIDA);
+  if (new Date(rader[0].startTime).getTime() <= Date.now())
+    return fel(res, 409, BARA_FRAMTIDA);
 
-  // Båda raderingarna i en transaktion, så att antingen allt eller inget tas bort
-  const anslutning = await db.getConnection();
-  try {
-    await anslutning.beginTransaction();
-    await anslutning.query("DELETE FROM bookedSeats WHERE bookingId = ?", [rader[0].id]);
-    await anslutning.query("DELETE FROM bookings WHERE id = ?", [rader[0].id]);
-    await anslutning.commit();
-  } catch (err) {
-    await anslutning.rollback();
-    throw err;
-  } finally {
-    anslutning.release();
+  const [result] = await db.query(
+    `UPDATE bookings
+   SET status = 'cancelled',
+       reserved_until = NULL
+   WHERE id = ? AND status = 'confirmed'`,
+    [rader[0].id],
+  );
+
+  if (result.affectedRows === 0) {
+    return res.status(409).json({
+      error: "Bokningen kunde inte avbokas",
+    });
   }
   res.json({ message: AVBOKAD });
 });
