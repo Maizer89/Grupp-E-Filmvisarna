@@ -2,10 +2,42 @@ import express from "express";
 import cors from "cors";
 import db from "./db.js";
 import { randomUUID } from "node:crypto";
+import { createServer } from "node:http";
+import { Server } from "socket.io";
 import { expirePendingBookings } from "./jobs/expireBookings.js";
 
 const app = express();
 const PORT = 3000;
+
+const httpServer = createServer(app);
+export const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PATCH"],
+  },
+});
+
+// US-14: Hantera realtidsanslutningar via Socket.io
+io.on("connection", (socket) => {
+  console.log("🔌 Ny Socket.io-klient ansluten:", socket.id);
+
+  socket.on("join_screening", (screeningId) => {
+    const room = `screening_${screeningId}`;
+    socket.join(room);
+    console.log(`📡 Klient ${socket.id} anslöt till rum ${room}`);
+  });
+
+  socket.on("leave_screening", (screeningId) => {
+    const room = `screening_${screeningId}`;
+    socket.leave(room);
+    console.log(`📡 Klient ${socket.id} lämnade rum ${room}`);
+  });
+
+
+  socket.on("disconnect", () => {
+    console.log("🔌 Socket.io-klient kopplade från:", socket.id);
+  });
+});
 
 app.use(cors());
 app.use(express.json());
@@ -306,6 +338,14 @@ app.post("/api/bookings", async (req, res) => {
 
     await connection.commit();
 
+    // US-14: Skicka ut uppdaterad stolstatus till alla som tittar på samma visning i realtid
+    io.to(`screening_${screeningId}`).emit("seat_status_changed", {
+      screeningId: Number(screeningId),
+      seatIds,
+      isAvailable: false,
+      status: "pending",
+    });
+
     return res.status(201).json({
       message: "Bokningen har skapats",
       bookingId,
@@ -419,6 +459,6 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
 // Check for expired bookings every minute
 setInterval(expirePendingBookings, 60 * 1000);
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Servern körs på http://localhost:${PORT}`);
 });
