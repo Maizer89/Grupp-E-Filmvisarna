@@ -33,15 +33,6 @@ io.on("connection", (socket) => {
     console.log(`📡 Klient ${socket.id} lämnade rum ${room}`);
   });
 
-  socket.on("book_seat_test", ({ screeningId, seatIds }) => {
-    console.log(`🎟️ [Test] Bokar stolar i realtid för visning ${screeningId}:`, seatIds);
-    io.to(`screening_${screeningId}`).emit("seat_status_changed", {
-      screeningId: Number(screeningId),
-      seatIds: seatIds,
-      isAvailable: false,
-      status: "pending",
-    });
-  });
 
   socket.on("disconnect", () => {
     console.log("🔌 Socket.io-klient kopplade från:", socket.id);
