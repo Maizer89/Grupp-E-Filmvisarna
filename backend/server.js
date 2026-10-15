@@ -362,6 +362,60 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
   }
 });
 
+// US-7: Hämta bokningsbekräftelse
+app.get("/api/bookings/:id/confirmation", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [bookings] = await db.query(
+      `SELECT
+        b.id AS bookingNumber,
+        b.status,
+        m.title AS movie,
+        s.start_time AS startTime
+      FROM bookings b
+      JOIN screenings s ON b.screening_id = s.id
+      JOIN movies m ON s.movie_id = m.id
+      WHERE b.id = ? AND b.status = 'confirmed'`,
+      [id]
+    );
+
+    if (bookings.length === 0) {
+      return res.status(404).json({
+        error: "Ingen bekräftad bokning hittades",
+      });
+    }
+
+      
+    // US-7: Hämta rad- och stolsnummer för bokningen
+    const [seats] = await db.query(
+      `SELECT
+        s.row_number AS rowNumber,
+        s.seat_number AS seatNumber
+      FROM tickets t
+      JOIN seats s ON t.seat_id = s.id
+      WHERE t.booking_id = ?
+      ORDER BY s.row_number, s.seat_number`,
+      [id]
+    );
+
+    return res.status(200).json({
+      bookingNumber: bookings[0].bookingNumber,
+      movie: bookings[0].movie,
+      startTime: bookings[0].startTime,
+      seats: seats,
+      status: bookings[0].status,
+    });
+
+  } catch (error) {
+    console.error("Fel vid hämtning av bokningsbekräftelse:", error);
+
+    return res.status(500).json({
+      error: "Kunde inte hämta bokningsbekräftelsen",
+    });
+  }
+});
+
 // Check for expired bookings every minute
 setInterval(expirePendingBookings, 60 * 1000);
 
