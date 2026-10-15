@@ -3,6 +3,7 @@ import cors from "cors";
 import db from "./db.js";
 import { randomUUID } from "node:crypto";
 import { expirePendingBookings } from "./jobs/expireBookings.js";
+import { sendBookingConfirmation } from "./services/emailService.js";
 
 const app = express();
 const PORT = 3000;
@@ -347,6 +348,43 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
         error:
           "Bokningen kan inte bekräftas eller reservationstiden har gått ut",
       });
+    }
+
+    // US-8: Skicka bokningsbekräftelse via e-post
+    try {
+      const [bookingInfo] = await db.query(
+        `SELECT b.customer_email, m.title AS movie, s.start_time AS startTime, a.name AS auditorium
+         FROM bookings b
+         JOIN screenings s ON b.screening_id = s.id
+         JOIN movies m ON s.movie_id = m.id
+         JOIN auditoriums a ON s.auditorium_id = a.id
+         WHERE b.id = ?`,
+        [id],
+      );
+
+      if (bookingInfo.length > 0) {
+        const [seats] = await db.query(
+          `SELECT s.row_number AS rowNumber, s.seat_number AS seatNumber
+           FROM tickets t
+           JOIN seats s ON t.seat_id = s.id
+           WHERE t.booking_id = ?
+           ORDER BY s.row_number, s.seat_number`,
+          [id],
+        );
+
+        sendBookingConfirmation({
+          to: bookingInfo[0].customer_email,
+          bookingNumber: id,
+          movieTitle: bookingInfo[0].movie,
+          screeningTime: bookingInfo[0].startTime,
+          auditoriumName: bookingInfo[0].auditorium,
+          seats,
+        }).catch((emailErr) => {
+          console.error("Fel vid asynkront skickande av bekräftelsemail:", emailErr);
+        });
+      }
+    } catch (emailQueryErr) {
+      console.error("Kunde inte hämta bokningsdetaljer för e-postutskick:", emailQueryErr);
     }
 
     return res.status(200).json({
