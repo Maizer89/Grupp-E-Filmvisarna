@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Screenings from "./pages/Screenings";
+import SeatSelection from "./pages/SeatSelection";
 
 function Home() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/screenings" element={<Screenings />} />
+          <Route path="/screenings/:id/seats" element={<SeatSelection />} />
         </Routes>
       </main>
     </BrowserRouter>
