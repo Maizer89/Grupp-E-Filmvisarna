@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { hamtaMinaBokningar } from "../api";
-import AvbokaKnapp from "./AvbokaKnapp";
+import AvbokaKnapp from "../components/AvbokaKnapp";
 
 // USER  18: se mina bokningar och bokningshistorik.
 // Använd: <MinaBokningar />
