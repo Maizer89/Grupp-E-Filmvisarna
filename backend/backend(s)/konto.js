@@ -2,9 +2,9 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import db from "./db.js";
 
-// USER  16: skapa konto.   USER  17: logga in (och ut).
+// USER 16: skapa konto.   USER 17: logga in (och ut).
+// Monteras under /api/auth i servern: app.use("/api/auth", konto)
 // Inloggningen sparas i en session (cookie). Kräver tabellen users (users.sql) och express-session i servern.
-
 
 const MIN_LOSENORD_LANGD = 8;
 const EPOST_MONSTER = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -19,7 +19,7 @@ const UTLOGGAD = "Du är utloggad";
 const router = Router();
 const fel = (res, status, meddelande) => res.status(status).json({ error: meddelande });
 
-
+// ---- Lösenord sparas som hash ("salt:hash"), aldrig i klartext. Bara inbyggt i Node. ----
 function hash(losenord) {
   const salt = crypto.randomBytes(16);
   return `${salt.toString("base64")}:${crypto.scryptSync(losenord, salt, 32).toString("base64")}`;
@@ -40,7 +40,7 @@ export async function inloggadAnvandare(req) {
   return rader[0];
 }
 
-// POST /api/register   { firstName, email, password }
+// POST /api/auth/register   { firstName, email, password }
 router.post("/register", async (req, res) => {
   const { firstName, email, password } = req.body ?? {};
   if (typeof email !== "string" || !EPOST_MONSTER.test(email.trim())) return fel(res, 400, OGILTIG_EPOST);
@@ -59,7 +59,7 @@ router.post("/register", async (req, res) => {
   res.status(201).json({ message: KONTO_SKAPAT });
 });
 
-// POST /api/login   { email, password }
+// POST /api/auth/login   { email, password }
 router.post("/login", async (req, res) => {
   const { email, password } = req.body ?? {};
   if (typeof email !== "string" || typeof password !== "string") return fel(res, 401, FEL_INLOGGNING);
@@ -78,12 +78,12 @@ router.post("/login", async (req, res) => {
   });
 });
 
-// DELETE /api/logout
+// DELETE /api/auth/logout
 router.delete("/logout", (req, res) => {
   req.session.destroy(() => res.json({ message: UTLOGGAD }));
 });
 
-// GET /api/me -> vem är inloggad? (401 om ingen)
+// GET /api/auth/me -> vem är inloggad? (401 om ingen)
 router.get("/me", async (req, res) => {
   const anvandare = await inloggadAnvandare(req);
   if (!anvandare) return fel(res, 401, INTE_INLOGGAD);
