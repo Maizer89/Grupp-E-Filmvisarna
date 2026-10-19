@@ -1,13 +1,40 @@
 import express from "express";
 import db from "./db.js";
 import { randomUUID } from "node:crypto";
+import { createServer } from "node:http";
+import { Server } from "socket.io";
 import { expirePendingBookings } from "./jobs/expireBookings.js";
 import kontoRouter from "./routes/konto.js";
 import session from "express-session";
 import minaBokningarRouter from "./routes/minaBokningar.js";
+import { sendBookingConfirmation } from "./services/emailService.js";
 
 const app = express();
 const PORT = 3000;
+
+const httpServer = createServer(app);
+export const io = new Server(httpServer);
+
+// US-14: Hantera realtidsanslutningar via Socket.io
+io.on("connection", (socket) => {
+  console.log("🔌 Ny Socket.io-klient ansluten:", socket.id);
+
+  socket.on("join_screening", (screeningId) => {
+    const room = `screening_${screeningId}`;
+    socket.join(room);
+    console.log(`📡 Klient ${socket.id} anslöt till rum ${room}`);
+  });
+
+  socket.on("leave_screening", (screeningId) => {
+    const room = `screening_${screeningId}`;
+    socket.leave(room);
+    console.log(`📡 Klient ${socket.id} lämnade rum ${room}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔌 Socket.io-klient kopplade från:", socket.id);
+  });
+});
 
 app.use(express.json());
 app.use(
@@ -323,6 +350,14 @@ app.post("/api/bookings", async (req, res) => {
 
     await connection.commit();
 
+    // US-14: Skicka ut uppdaterad stolstatus till alla som tittar på samma visning i realtid
+    io.to(`screening_${screeningId}`).emit("seat_status_changed", {
+      screeningId: Number(screeningId),
+      seatIds,
+      isAvailable: false,
+      status: "pending",
+    });
+
     return res.status(201).json({
       message: "Bokningen har skapats",
       bookingId,
@@ -364,6 +399,49 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
         error:
           "Bokningen kan inte bekräftas eller reservationstiden har gått ut",
       });
+    }
+
+    // US-8: Skicka bokningsbekräftelse via e-post
+    try {
+      const [bookingInfo] = await db.query(
+        `SELECT b.customer_email, m.title AS movie, s.start_time AS startTime, a.name AS auditorium
+         FROM bookings b
+         JOIN screenings s ON b.screening_id = s.id
+         JOIN movies m ON s.movie_id = m.id
+         JOIN auditoriums a ON s.auditorium_id = a.id
+         WHERE b.id = ?`,
+        [id],
+      );
+
+      if (bookingInfo.length > 0) {
+        const [seats] = await db.query(
+          `SELECT s.row_number AS rowNumber, s.seat_number AS seatNumber
+           FROM tickets t
+           JOIN seats s ON t.seat_id = s.id
+           WHERE t.booking_id = ?
+           ORDER BY s.row_number, s.seat_number`,
+          [id],
+        );
+
+        sendBookingConfirmation({
+          to: bookingInfo[0].customer_email,
+          bookingNumber: id,
+          movieTitle: bookingInfo[0].movie,
+          screeningTime: bookingInfo[0].startTime,
+          auditoriumName: bookingInfo[0].auditorium,
+          seats,
+        }).catch((emailErr) => {
+          console.error(
+            "Fel vid asynkront skickande av bekräftelsemail:",
+            emailErr,
+          );
+        });
+      }
+    } catch (emailQueryErr) {
+      console.error(
+        "Kunde inte hämta bokningsdetaljer för e-postutskick:",
+        emailQueryErr,
+      );
     }
 
     return res.status(200).json({
@@ -434,6 +512,6 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
 // Check for expired bookings every minute
 setInterval(expirePendingBookings, 60 * 1000);
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Servern körs på http://localhost:${PORT}`);
 });

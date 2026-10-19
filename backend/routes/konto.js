@@ -2,7 +2,8 @@ import { Router } from "express";
 import crypto from "node:crypto";
 import db from "../db.js";
 
-// USER  16: skapa konto.   USER  17: logga in (och ut).
+// USER 16: skapa konto.   USER 17: logga in (och ut).
+// Monteras under /api/auth i servern: app.use("/api/auth", konto)
 // Inloggningen sparas i en session (cookie). Kräver tabellen users (users.sql) och express-session i servern.
 
 const MIN_LOSENORD_LANGD = 8;
@@ -46,7 +47,7 @@ export async function inloggadAnvandare(req) {
   return rader[0];
 }
 
-// POST /api/register   { firstName, lastName, email, password }
+// POST /api/auth/register   { firstName, lastName, email, password }
 router.post("/register", async (req, res) => {
   const { firstName, lastName, email, password } = req.body ?? {};
   if (
@@ -80,7 +81,7 @@ router.post("/register", async (req, res) => {
   res.status(201).json({ message: KONTO_SKAPAT });
 });
 
-// POST /api/login   { email, password }
+// POST /api/auth/login   { email, password }
 router.post("/login", async (req, res) => {
   const { email, password } = req.body ?? {};
   if (typeof email !== "string" || typeof password !== "string")
@@ -125,7 +126,7 @@ router.post("/login", async (req, res) => {
   });
 });
 
-// DELETE /api/logout
+// DELETE /api/auth/logout
 router.delete("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -139,7 +140,7 @@ router.delete("/logout", (req, res) => {
   });
 });
 
-// GET /api/me -> vem är inloggad? (401 om ingen)
+// GET /api/auth/me -> vem är inloggad? (401 om ingen)
 router.get("/me", async (req, res) => {
   const anvandare = await inloggadAnvandare(req);
   if (!anvandare) return fel(res, 401, INTE_INLOGGAD);

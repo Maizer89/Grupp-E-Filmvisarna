@@ -2,7 +2,7 @@ import { Router } from "express";
 import db from "../db.js";
 import { inloggadAnvandare, INTE_INLOGGAD } from "./konto.js";
 
-// USER  18: se mina bokningar och bokningshistorik.   USER STORY 15: avboka en framtida bokning.
+// USER  18: se mina bokningar och bokningshistorik.   USER 15: avboka en framtida bokning.
 // Kräver att man är inloggad (konto.js). Bokningar kopplas till användaren via e-post
 // (bookings.customerEmail = users.email).
 
