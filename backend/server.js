@@ -1,22 +1,19 @@
 import express from "express";
-import cors from "cors";
 import db from "./db.js";
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { expirePendingBookings } from "./jobs/expireBookings.js";
+import kontoRouter from "./routes/konto.js";
+import session from "express-session";
+import minaBokningarRouter from "./routes/minaBokningar.js";
 import { sendBookingConfirmation } from "./services/emailService.js";
 
 const app = express();
 const PORT = 3000;
 
 const httpServer = createServer(app);
-export const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PATCH"],
-  },
-});
+export const io = new Server(httpServer);
 
 // US-14: Hantera realtidsanslutningar via Socket.io
 io.on("connection", (socket) => {
@@ -34,22 +31,36 @@ io.on("connection", (socket) => {
     console.log(`📡 Klient ${socket.id} lämnade rum ${room}`);
   });
 
-
   socket.on("disconnect", () => {
     console.log("🔌 Socket.io-klient kopplade från:", socket.id);
   });
 });
 
-app.use(cors());
 app.use(express.json());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+    },
+  }),
+);
+
+app.use("/api", kontoRouter);
+
+app.use("/api", minaBokningarRouter);
 
 // US-10: Hämta biljettyper och priser
 app.get("/api/ticket-types", async (req, res) => {
   try {
     const [ticketTypes] = await db.query(
-      "SELECT id, name, price FROM ticket_types ORDER BY id"
+      "SELECT id, name, price FROM ticket_types ORDER BY id",
     );
-  
+
     return res.status(200).json(ticketTypes);
   } catch (error) {
     console.error("Fel vid hämtning av biljettpriser:", error);
@@ -270,13 +281,13 @@ app.post("/api/bookings", async (req, res) => {
 
     // US-10: Beräkna totalpriset utifrån valda biljettyper
     const ticketPrices = new Map(
-      validTicketTypes.map((ticketType) => [ticketType.id, ticketType.price])
+      validTicketTypes.map((ticketType) => [ticketType.id, ticketType.price]),
     );
 
     const totalPrice = seats.reduce((total, seat) => {
       return total + ticketPrices.get(seat.ticketTypeId);
     }, 0);
-    
+
     // Lock selected seats during the transaction to prevent double bookings
     const sortedSeatIds = [...seatIds].sort((a, b) => a - b);
     const placeholders = sortedSeatIds.map(() => "?").join(",");
@@ -420,11 +431,17 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
           auditoriumName: bookingInfo[0].auditorium,
           seats,
         }).catch((emailErr) => {
-          console.error("Fel vid asynkront skickande av bekräftelsemail:", emailErr);
+          console.error(
+            "Fel vid asynkront skickande av bekräftelsemail:",
+            emailErr,
+          );
         });
       }
     } catch (emailQueryErr) {
-      console.error("Kunde inte hämta bokningsdetaljer för e-postutskick:", emailQueryErr);
+      console.error(
+        "Kunde inte hämta bokningsdetaljer för e-postutskick:",
+        emailQueryErr,
+      );
     }
 
     return res.status(200).json({
@@ -455,7 +472,7 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
       JOIN screenings s ON b.screening_id = s.id
       JOIN movies m ON s.movie_id = m.id
       WHERE b.id = ? AND b.status = 'confirmed'`,
-      [id]
+      [id],
     );
 
     if (bookings.length === 0) {
@@ -464,7 +481,6 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
       });
     }
 
-      
     // US-7: Hämta rad- och stolsnummer för bokningen
     const [seats] = await db.query(
       `SELECT
@@ -474,7 +490,7 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
       JOIN seats s ON t.seat_id = s.id
       WHERE t.booking_id = ?
       ORDER BY s.row_number, s.seat_number`,
-      [id]
+      [id],
     );
 
     return res.status(200).json({
@@ -484,7 +500,6 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
       seats: seats,
       status: bookings[0].status,
     });
-
   } catch (error) {
     console.error("Fel vid hämtning av bokningsbekräftelse:", error);
 
