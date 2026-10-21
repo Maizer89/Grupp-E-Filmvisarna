@@ -137,6 +137,40 @@ app.get("/api/screenings", async (req, res) => {
   }
 });
 
+app.get("/api/screenings/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        s.id,
+        s.start_time,
+        m.id AS movie_id,
+        m.title AS movie_title,
+        a.name AS auditorium_name
+      FROM screenings s
+      JOIN movies m ON s.movie_id = m.id
+      JOIN auditoriums a ON s.auditorium_id = a.id
+      WHERE s.id = ?`,
+      [id],
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        error: "Visningen hittades inte",
+      });
+    }
+
+    return res.status(200).json(rows[0]);
+  } catch (error) {
+    console.error("Fel vid hämtning av visning:", error);
+
+    return res.status(500).json({
+      error: "Kunde inte hämta visningen",
+    });
+  }
+});
+
 app.get("/api/screenings/:id/seats", async (req, res) => {
   const screeningId = req.params.id;
 
