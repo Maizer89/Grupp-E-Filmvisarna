@@ -2,6 +2,7 @@ import SeatMap from "../components/SeatMap.jsx";
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import TicketSelector from "../components/TicketSelector";
+import BookingSteps from "../components/BookingSteps";
 
 export default function SeatSelection() {
   const { id } = useParams();
@@ -68,21 +69,63 @@ export default function SeatSelection() {
     return total + count * ticketType.price;
   }, 0);
 
+  const totalTickets = Object.values(ticketCounts).reduce(
+    (total, count) => total + count,
+    0,
+  );
+
   return (
-    <div className="p-8 text-white">
+    <div className="mx-auto max-w-5xl px-6 py-8 text-white">
       {loading ? (
         <p>Hämtar stolar...</p>
       ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : (
         <>
-          <SeatMap seats={seats} />
+          <BookingSteps currentStep={1} />
 
           <TicketSelector
             ticketTypes={ticketTypes}
             ticketCounts={ticketCounts}
             updateTicketCount={updateTicketCount}
           />
+
+          <div className="mb-12 mt-10">
+            <svg
+              viewBox="0 0 600 40"
+              className="mx-auto h-10 w-full max-w-[550px]"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M 5 30 Q 300 5 595 30"
+                fill="none"
+                stroke="#FF8A3D"
+                strokeWidth="8"
+                strokeLinecap="round"
+              />
+            </svg>
+            <p className="mt-3 text-center text-xs tracking-widest text-[#C8A96B]">
+              BIODUK
+            </p>
+          </div>
+
+          <SeatMap seats={seats} />
+
+          <div className="mt-8 rounded-xl bg-[#202026] p-6 text-[#EEE7D6]">
+            <h2 className="mb-6 text-xl font-bold">Din bokning</h2>
+
+            <div className="flex items-center justify-between">
+              <span>Antal biljetter</span>
+              <span className="font-semibold">{totalTickets} st</span>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between border-t border-[#EEE7D6]/20 pt-4">
+              <span className="font-semibold">Totalt pris</span>
+              <span className="text-xl font-bold text-[#6FAF65]">
+                {totalPrice} kr
+              </span>
+            </div>
+          </div>
         </>
       )}
     </div>
