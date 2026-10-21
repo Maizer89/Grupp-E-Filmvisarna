@@ -1,34 +1,16 @@
 import SeatMap from "../components/SeatMap.jsx";
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import TicketSelector from "../components/TicketSelector";
 import BookingSteps from "../components/BookingSteps.jsx";
 import useSeats from "../hooks/useSeats.js";
+import useTicketTypes from "../hooks/useTicketTypes.js";
 
 export default function SeatSelection() {
   const { id } = useParams();
-  const [ticketTypes, setTicketTypes] = useState([]);
+  const { ticketTypes } = useTicketTypes();
   const [ticketCounts, setTicketCounts] = useState({});
   const { seats, loading, error } = useSeats(id);
-
-  useEffect(() => {
-    async function fetchTicketTypes() {
-      try {
-        const response = await fetch("/api/ticket-types");
-
-        if (!response.ok) {
-          throw new Error("Kunde inte hämta biljettyper");
-        }
-
-        const data = await response.json();
-        setTicketTypes(data);
-      } catch (error) {
-        console.error("Fel vid hämtning av biljettyper:", error);
-      }
-    }
-
-    fetchTicketTypes();
-  }, []);
 
   function updateTicketCount(ticketTypeId, change) {
     setTicketCounts((prev) => ({
