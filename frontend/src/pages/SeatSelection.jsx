@@ -5,12 +5,18 @@ import TicketSelector from "../components/TicketSelector";
 import BookingSteps from "../components/BookingSteps.jsx";
 import useSeats from "../hooks/useSeats.js";
 import useTicketTypes from "../hooks/useTicketTypes.js";
+import useScreening from "../hooks/useScreening.js";
 
 export default function SeatSelection() {
   const { id } = useParams();
   const { ticketTypes } = useTicketTypes();
   const [ticketCounts, setTicketCounts] = useState({});
   const { seats, loading, error } = useSeats(id);
+  const {
+    screening,
+    loading: screeningLoading,
+    error: screeningError,
+  } = useScreening(id);
 
   function updateTicketCount(ticketTypeId, change) {
     setTicketCounts((prev) => ({
@@ -32,13 +38,29 @@ export default function SeatSelection() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 text-white">
-      {loading ? (
-        <p>Hämtar stolar...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
+      {loading || screeningLoading ? (
+        <p>Hämtar visningsinformation...</p>
+      ) : error || screeningError ? (
+        <p className="text-red-500">{error || screeningError}</p>
       ) : (
         <>
           <BookingSteps currentStep={1} />
+
+          <div className="mb-10 text-center text-[#EEE7D6]">
+            <h1 className="mb-3 text-3xl font-bold">{screening.movie_title}</h1>
+
+            <p className="text-lg">
+              {new Date(screening.start_time).toLocaleString("sv-SE", {
+                timeZone: "Europe/Stockholm",
+                day: "numeric",
+                month: "long",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+
+            <p className="mt-2 text-[#C8A96B]">{screening.auditorium_name}</p>
+          </div>
 
           <TicketSelector
             ticketTypes={ticketTypes}
