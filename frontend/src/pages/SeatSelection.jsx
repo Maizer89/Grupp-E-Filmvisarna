@@ -2,7 +2,7 @@ import SeatMap from "../components/SeatMap.jsx";
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import TicketSelector from "../components/TicketSelector";
-import BookingSteps from "../components/BookingSteps";
+import BookingSteps from "../components/BookingSteps.jsx";
 
 export default function SeatSelection() {
   const { id } = useParams();
