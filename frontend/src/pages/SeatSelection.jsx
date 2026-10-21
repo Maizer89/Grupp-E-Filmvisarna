@@ -1,11 +1,12 @@
 import SeatMap from "../components/SeatMap.jsx";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import TicketSelector from "../components/TicketSelector";
 import BookingSteps from "../components/BookingSteps.jsx";
 import useSeats from "../hooks/useSeats.js";
 import useTicketTypes from "../hooks/useTicketTypes.js";
 import useScreening from "../hooks/useScreening.js";
+import ScreeningInfo from "../components/ScreeningInfo";
 
 export default function SeatSelection() {
   const { id } = useParams();
@@ -17,6 +18,8 @@ export default function SeatSelection() {
     loading: screeningLoading,
     error: screeningError,
   } = useScreening(id);
+
+  const navigate = useNavigate();
 
   function updateTicketCount(ticketTypeId, change) {
     setTicketCounts((prev) => ({
@@ -46,21 +49,12 @@ export default function SeatSelection() {
         <>
           <BookingSteps currentStep={1} />
 
-          <div className="mb-10 text-center text-[#EEE7D6]">
-            <h1 className="mb-3 text-3xl font-bold">{screening.movie_title}</h1>
-
-            <p className="text-lg">
-              {new Date(screening.start_time).toLocaleString("sv-SE", {
-                timeZone: "Europe/Stockholm",
-                day: "numeric",
-                month: "long",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-
-            <p className="mt-2 text-[#C8A96B]">{screening.auditorium_name}</p>
-          </div>
+          <ScreeningInfo
+            screening={screening}
+            onSelect={(screeningId) => {
+              navigate(`/screenings/${screeningId}/seats`);
+            }}
+          />
 
           <TicketSelector
             ticketTypes={ticketTypes}
