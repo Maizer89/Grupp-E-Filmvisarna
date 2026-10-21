@@ -12,6 +12,25 @@ import { sendBookingConfirmation } from "./services/emailService.js";
 const app = express();
 const PORT = 3000;
 
+function getSwedishTime() {
+  const formatter = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+
+  const parts = Object.fromEntries(
+    formatter.formatToParts(new Date()).map(({ type, value }) => [type, value]),
+  );
+
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`;
+}
+
 const httpServer = createServer(app);
 export const io = new Server(httpServer);
 
@@ -272,8 +291,11 @@ app.post("/api/bookings", async (req, res) => {
 
     await connection.beginTransaction(); // Starts a transaction
     const [screenings] = await connection.query(
-      "SELECT id, auditorium_id FROM screenings WHERE id = ?",
-      [screeningId],
+      `SELECT id, auditorium_id,
+          start_time > ? AS is_future
+   FROM screenings
+   WHERE id = ?`,
+      [getSwedishTime(), screeningId],
     );
 
     if (screenings.length === 0) {
@@ -281,6 +303,14 @@ app.post("/api/bookings", async (req, res) => {
 
       return res.status(404).json({
         error: "Visningen hittades inte",
+      });
+    }
+
+    if (!screenings[0].is_future) {
+      await connection.rollback();
+
+      return res.status(409).json({
+        error: "Det går inte att boka en visning som redan har börjat",
       });
     }
 
@@ -419,13 +449,15 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
 
   try {
     const [result] = await db.query(
-      `UPDATE bookings
-   SET status = 'confirmed',
-       reserved_until = NULL
-   WHERE id = ?
-     AND status = 'pending'
-     AND reserved_until > NOW()`,
-      [id],
+      `UPDATE bookings b
+   JOIN screenings s ON b.screening_id = s.id
+   SET b.status = 'confirmed',
+       b.reserved_until = NULL
+   WHERE b.id = ?
+     AND b.status = 'pending'
+     AND b.reserved_until > NOW()
+     AND s.start_time > ?`,
+      [id, getSwedishTime()],
     );
 
     if (result.affectedRows === 0) {
