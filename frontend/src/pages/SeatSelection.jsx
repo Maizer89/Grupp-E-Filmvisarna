@@ -71,7 +71,7 @@ export default function SeatSelection() {
               <path
                 d="M 5 30 Q 300 5 595 30"
                 fill="none"
-                stroke="#FF8A3D"
+                stroke="#FF6685"
                 strokeWidth="8"
                 strokeLinecap="round"
               />
@@ -81,19 +81,19 @@ export default function SeatSelection() {
             </p>
           </div>
 
-          <SeatMap seats={seats} />
+          <SeatMap seats={seats} ticketCount={totalTickets} />
 
-          <div className="mt-8 rounded-xl bg-[#202026] p-6 text-[#EEE7D6]">
-            <h2 className="mb-6 text-xl font-bold">Din bokning</h2>
+          <div className="mx-auto mt-6 w-full max-w-[600px] rounded-lg bg-[#141416] p-5 text-[#EEE7D6]">
+            <h2 className="mb-4 text-base font-semibold">Din bokning</h2>
 
-            <div className="flex items-center justify-between">
-              <span>Antal biljetter</span>
-              <span className="font-semibold">{totalTickets} st</span>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-[#EEE7D6]/70">Antal biljetter</span>
+              <span className="font-medium">{totalTickets} st</span>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-[#EEE7D6]/20 pt-4">
-              <span className="font-semibold">Totalt pris</span>
-              <span className="text-xl font-bold text-[#6FAF65]">
+            <div className="mt-3 flex items-center justify-between border-t border-[#EEE7D6]/10 pt-3">
+              <span className="text-sm font-medium">Totalt pris</span>
+              <span className="text-lg font-semibold text-[#FF893C]">
                 {totalPrice} kr
               </span>
             </div>
