@@ -42,6 +42,27 @@ export default function SeatSelection() {
     0,
   );
 
+  const selectedTickets = [];
+
+  const sortedSelectedSeats = [...selectedSeats].sort((a, b) => a - b);
+
+  let seatIndex = 0;
+
+  ticketTypes.forEach((ticketType) => {
+    const count = ticketCounts[ticketType.id] || 0;
+
+    for (let i = 0; i < count; i++) {
+      if (seatIndex >= sortedSelectedSeats.length) break;
+
+      selectedTickets.push({
+        seatId: sortedSelectedSeats[seatIndex],
+        ticketTypeId: ticketType.id,
+      });
+
+      seatIndex++;
+    }
+  });
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 text-white">
       {loading || screeningLoading ? (
@@ -91,7 +112,7 @@ export default function SeatSelection() {
             setSelectedSeats={setSelectedSeats}
           />
 
-          <div className="mx-auto mt-6 w-full max-w-[600px] rounded-lg bg-[#141416] p-5 text-[#EEE7D6]">
+          <div className="mx-auto mt-6 w-full max-w-[600px] rounded-lg bg-[#202026] p-5 text-[#EEE7D6]">
             <h2 className="mb-4 text-base font-semibold">Din bokning</h2>
 
             <div className="flex items-center justify-between text-sm">
@@ -105,6 +126,57 @@ export default function SeatSelection() {
                 {totalPrice} kr
               </span>
             </div>
+          </div>
+
+          <div className="mx-auto mt-10 flex w-full max-w-[900px] flex-col-reverse justify-between gap-4 px-4 pb-10 sm:flex-row sm:px-0">
+            {/* Tillbaka */}
+            <button
+              type="button"
+              className="flex items-center justify-center gap-3 rounded-md border border-[#EEE7D6]/50 bg-[#202026] px-6 py-3 text-[#EEE7D6] transition-colors hover:bg-[#303036]"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M19 12H5M12 19l-7-7 7-7"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Tillbaka
+            </button>
+
+            {/* Gå vidare */}
+            <button
+              type="button"
+              disabled={
+                totalTickets === 0 || selectedSeats.length !== totalTickets
+              }
+              className="flex items-center justify-center gap-3 rounded-md bg-[#FF893C] px-6 py-3 font-medium text-[#070706] transition-colors hover:bg-[#FF9E5C] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Gå vidare
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 12h14m-7-7 7 7-7 7"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
         </>
       )}
