@@ -6,7 +6,7 @@ export default function ScreeningInfo({ screening, onSelect }) {
 
   return (
     <div className="mb-10 text-center">
-      <div className="flex items-center justify-center gap-4 text-[#C8A96B]">
+      <div className="flex items-center justify-center gap-4 text-[#EEE7D6]">
         <span>{screening.movie_title}</span>
         <span>|</span>
         <span>
