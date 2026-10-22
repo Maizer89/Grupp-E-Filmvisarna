@@ -79,46 +79,49 @@ export default function SeatMap({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 text-[#EEE7D6]">
+    <div className="flex w-full flex-col items-center gap-4 text-[#EEE7D6]">
       <h2 className="text-lg font-semibold">Välj dina platser</h2>
 
       <div
-        className="flex w-full flex-col items-center gap-3 overflow-x-auto"
+        className="flex w-full flex-col items-center gap-2.5 sm:gap-3"
         onMouseLeave={() => setHoveredSeats([])}
       >
         {Object.entries(rows).map(([rowNumber, rowSeats]) => (
           <div
             key={rowNumber}
-            className="flex items-center justify-center gap-1.5 sm:gap-2"
+            className="flex w-full items-center justify-center gap-1 sm:gap-2"
           >
-            <span className="w-12 shrink-0 text-xs sm:text-sm">
+            <span className="w-8 shrink-0 text-[10px] sm:w-12 sm:text-sm">
               Rad {rowNumber}
             </span>
 
-            {rowSeats.map((seat) => {
-              const isSelected = selectedSeats.includes(seat.id);
-              const isHovered = hoveredSeats.includes(seat.id);
+            <div className="flex items-center justify-center gap-1 sm:gap-2">
+              {rowSeats.map((seat) => {
+                const isSelected = selectedSeats.includes(seat.id);
+                const isHovered = hoveredSeats.includes(seat.id);
 
-              return (
-                <button
-                  key={seat.id}
-                  type="button"
-                  disabled={!seat.isAvailable}
-                  onMouseEnter={() => handleSeatHover(seat, rowSeats)}
-                  onClick={() => handleSeatClick(seat, rowSeats)}
-                  aria-pressed={isSelected}
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-t-md text-xs transition-colors sm:h-9 sm:w-9 sm:rounded-t-lg sm:text-sm ${
-                    !seat.isAvailable
-                      ? "bg-[#E23A1A] text-white"
-                      : isSelected || isHovered
-                        ? "bg-[#6FAF65] text-[#070706]"
-                        : "bg-[#EEE7D6] text-[#070706]"
-                  }`}
-                >
-                  {seat.seat_number}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={seat.id}
+                    type="button"
+                    disabled={!seat.isAvailable}
+                    onMouseEnter={() => handleSeatHover(seat, rowSeats)}
+                    onClick={() => handleSeatClick(seat, rowSeats)}
+                    aria-pressed={isSelected}
+                    aria-label={`Rad ${rowNumber}, plats ${seat.seat_number}`}
+                    className={`flex aspect-square w-[clamp(18px,5.5vw,36px)] shrink-0 items-center justify-center rounded-t-md text-[10px] transition-colors sm:rounded-t-lg sm:text-sm ${
+                      !seat.isAvailable
+                        ? "bg-[#E23A1A] text-white"
+                        : isSelected || isHovered
+                          ? "bg-[#6FAF65] text-[#070706]"
+                          : "bg-[#EEE7D6] text-[#070706]"
+                    }`}
+                  >
+                    {seat.seat_number}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>

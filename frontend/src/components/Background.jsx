@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import mergedAsset11 from "../assets/merged-asset-11@2x.png";
 import mergedAsset21 from "../assets/merged-asset-21@2x.png";
 import containerBox from "../assets/Container-Box.svg";
@@ -6,7 +7,7 @@ function BackgroundPattern() {
   return (
     <div className="relative aspect-[1440/1024] w-full shrink-0 overflow-hidden">
       <div
-        className="absolute top-0 left-0 h-[1024px] w-[1440px] origin-top-left"
+        className="absolute top-0 left-0 h-[1024px] w-[1440px] origin-top-left opacity-35"
         style={{
           transform: "scale(var(--pattern-scale))",
         }}
@@ -62,8 +63,35 @@ function BackgroundPattern() {
 }
 
 export default function Background() {
+  const backgroundRef = useRef(null);
+  const [patternCount, setPatternCount] = useState(4);
+
+  useEffect(() => {
+    const background = backgroundRef.current;
+    if (!background) return;
+
+    function updatePatternCount() {
+      const width = background.clientWidth;
+      const height = background.clientHeight;
+
+      if (!width) return;
+
+      const patternHeight = (width * 1024) / 1440;
+
+      setPatternCount(Math.max(1, Math.ceil(height / patternHeight)));
+    }
+
+    const observer = new ResizeObserver(updatePatternCount);
+    observer.observe(background);
+
+    updatePatternCount();
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={backgroundRef}
       aria-hidden="true"
       className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#070706]"
       style={{
@@ -71,10 +99,9 @@ export default function Background() {
       }}
     >
       <div className="flex flex-col">
-        <BackgroundPattern />
-        <BackgroundPattern />
-        <BackgroundPattern />
-        <BackgroundPattern />
+        {Array.from({ length: patternCount }, (_, index) => (
+          <BackgroundPattern key={index} />
+        ))}
       </div>
     </div>
   );
