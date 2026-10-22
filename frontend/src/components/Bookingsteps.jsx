@@ -6,7 +6,7 @@ export default function BookingSteps({ currentStep }) {
   ];
 
   return (
-    <div className="mb-12 flex items-center justify-center gap-10">
+    <div className="mb-12 flex flex-wrap items-center justify-center gap-4 sm:gap-10 lg:gap-40">
       {steps.map((step) => (
         <div key={step.id} className="flex items-center gap-3">
           <span
