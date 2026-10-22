@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Screenings from "./pages/Screenings";
 import SeatSelection from "./pages/SeatSelection";
+import Background from "./components/Background";
 
 function Home() {
   return (
@@ -19,7 +20,9 @@ function Home() {
 export default function App() {
   return (
     <BrowserRouter>
-      <main className="min-h-screen bg-zinc-950">
+      <main className="relative isolate min-h-screen overflow-hidden bg-[#070706]">
+        <Background />
+
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/screenings" element={<Screenings />} />
