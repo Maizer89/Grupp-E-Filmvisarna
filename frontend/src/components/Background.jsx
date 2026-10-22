@@ -2,12 +2,9 @@ import mergedAsset11 from "../assets/merged-asset-11@2x.png";
 import mergedAsset21 from "../assets/merged-asset-21@2x.png";
 import containerBox from "../assets/Container-Box.svg";
 
-export default function Background() {
+function BackgroundPattern() {
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#070706]"
-    >
+    <div className="relative h-[1024px] w-full shrink-0 overflow-hidden">
       {/* Övre vänstra dekorationen */}
       <img
         src={mergedAsset21}
@@ -30,21 +27,21 @@ export default function Background() {
       <img
         src={containerBox}
         alt=""
-        className="absolute top-[380px] right-[1300px] h-[230px] w-[488px]"
+        className="absolute top-[180px] right-[1300px] h-[230px] w-[488px]"
       />
 
       {/* Stora penseldraget längst ner */}
       <img
         src={containerBox}
         alt=""
-        className="absolute bottom-[-600.3px] left-[-1115px] h-[1311.3px] w-[1951.7px] object-contain"
+        className="absolute bottom-[-500.3px] left-[-1115px] h-[1311.3px] w-[1951.7px] object-contain"
       />
 
       {/* Penseldrag höger nere */}
       <img
         src={containerBox}
         alt=""
-        className="absolute top-[794px] right-[-5px] h-[230px] w-[488px]"
+        className="absolute top-[700px] right-[150px] h-[230px] w-[488px]"
       />
 
       {/* Penseldrag höger uppe */}
@@ -53,6 +50,22 @@ export default function Background() {
         alt=""
         className="absolute top-[57px] right-[-250px] h-[363px] w-[684px]"
       />
+    </div>
+  );
+}
+
+export default function Background() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-[#070706]"
+    >
+      <div className="flex flex-col">
+        <BackgroundPattern />
+        <BackgroundPattern />
+        <BackgroundPattern />
+        <BackgroundPattern />
+      </div>
     </div>
   );
 }
