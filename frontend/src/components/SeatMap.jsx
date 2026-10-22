@@ -1,6 +1,11 @@
 import { useState } from "react";
 
-export default function SeatMap({ seats, ticketCount = 0 }) {
+export default function SeatMap({
+  seats,
+  ticketCount = 0,
+  selectedSeats,
+  setSelectedSeats,
+}) {
   const [hoveredSeats, setHoveredSeats] = useState([]);
 
   const rows = Object.groupBy(seats, (seat) => seat.row_number);
@@ -36,6 +41,43 @@ export default function SeatMap({ seats, ticketCount = 0 }) {
     setHoveredSeats(validGroup ? group.map((s) => s.id) : []);
   }
 
+  function handleSeatClick(seat, rowSeats) {
+    if (!seat.isAvailable || ticketCount === 0) return;
+
+    // Klick på en redan vald stol avmarkerar gruppen.
+    if (selectedSeats.includes(seat.id)) {
+      setSelectedSeats([]);
+      return;
+    }
+
+    const sortedSeats = [...rowSeats].sort(
+      (a, b) => a.seat_number - b.seat_number,
+    );
+
+    const hoveredIndex = sortedSeats.findIndex(
+      (currentSeat) => currentSeat.id === seat.id,
+    );
+
+    const seatsToLeft = Math.floor((ticketCount - 1) / 2);
+    const startIndex = hoveredIndex - seatsToLeft;
+
+    const group = sortedSeats.slice(startIndex, startIndex + ticketCount);
+
+    const validGroup =
+      startIndex >= 0 &&
+      group.length === ticketCount &&
+      group.every(
+        (currentSeat, index) =>
+          currentSeat.isAvailable &&
+          currentSeat.seat_number === group[0].seat_number + index,
+      );
+
+    if (!validGroup) return;
+
+    setSelectedSeats(group.map((currentSeat) => currentSeat.id));
+    setHoveredSeats([]);
+  }
+
   return (
     <div className="flex flex-col items-center gap-4 text-[#EEE7D6]">
       <h2 className="text-lg font-semibold">Välj dina platser</h2>
@@ -54,6 +96,7 @@ export default function SeatMap({ seats, ticketCount = 0 }) {
             </span>
 
             {rowSeats.map((seat) => {
+              const isSelected = selectedSeats.includes(seat.id);
               const isHovered = hoveredSeats.includes(seat.id);
 
               return (
@@ -62,10 +105,12 @@ export default function SeatMap({ seats, ticketCount = 0 }) {
                   type="button"
                   disabled={!seat.isAvailable}
                   onMouseEnter={() => handleSeatHover(seat, rowSeats)}
+                  onClick={() => handleSeatClick(seat, rowSeats)}
+                  aria-pressed={isSelected}
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-t-md text-xs transition-colors sm:h-9 sm:w-9 sm:rounded-t-lg sm:text-sm ${
                     !seat.isAvailable
                       ? "bg-[#E23A1A] text-white"
-                      : isHovered
+                      : isSelected || isHovered
                         ? "bg-[#6FAF65] text-[#070706]"
                         : "bg-[#EEE7D6] text-[#070706]"
                   }`}

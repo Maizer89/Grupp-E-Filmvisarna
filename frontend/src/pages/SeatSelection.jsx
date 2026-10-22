@@ -13,6 +13,7 @@ export default function SeatSelection() {
   const { ticketTypes } = useTicketTypes();
   const [ticketCounts, setTicketCounts] = useState({});
   const { seats, loading, error } = useSeats(id);
+  const [selectedSeats, setSelectedSeats] = useState([]);
   const {
     screening,
     loading: screeningLoading,
@@ -26,6 +27,8 @@ export default function SeatSelection() {
       ...prev,
       [ticketTypeId]: Math.max(0, (prev[ticketTypeId] || 0) + change),
     }));
+
+    setSelectedSeats([]);
   }
 
   const totalPrice = ticketTypes.reduce((total, ticketType) => {
@@ -81,7 +84,12 @@ export default function SeatSelection() {
             </p>
           </div>
 
-          <SeatMap seats={seats} ticketCount={totalTickets} />
+          <SeatMap
+            seats={seats}
+            ticketCount={totalTickets}
+            selectedSeats={selectedSeats}
+            setSelectedSeats={setSelectedSeats}
+          />
 
           <div className="mx-auto mt-6 w-full max-w-[600px] rounded-lg bg-[#141416] p-5 text-[#EEE7D6]">
             <h2 className="mb-4 text-base font-semibold">Din bokning</h2>
