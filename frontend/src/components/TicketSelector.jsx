@@ -4,7 +4,7 @@ export default function TicketSelector({
   updateTicketCount,
 }) {
   return (
-    <div className="mx-auto mb-8 w-full max-w-[600px] rounded-lg bg-[#141416] p-5 text-[#EEE7D6]">
+    <div className="mx-auto mb-8 w-full max-w-[600px] rounded-lg bg-[#202026] p-5 text-[#EEE7D6]">
       <h2 className="mb-4 text-base font-semibold">Välj antal biljetter</h2>
 
       <div className="flex flex-col gap-3">
