@@ -85,16 +85,16 @@ export default function ScreeningSelector({ movieId, onSelect }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory md:grid md:grid-cols-7 md:overflow-visible">
         {days.map((day) => {
           const dayScreenings = getScreeningsForDay(day);
 
           return (
             <div
               key={day.toISOString()}
-              className="min-h-[208px] rounded-md border border-[#FF8A3D] bg-[#070706] p-1.5"
+              className="min-h-[208px] w-[120px] shrink-0 snap-start rounded-md border border-[#FF8A3D] bg-[#070706] p-1.5 md:w-auto"
             >
-              <h3 className="mb-1.5 border-b border-[#FF8A3D] pb-2 font-['Roboto_Serif'] text-lg font-bold">
+              <h3 className="mb-1.5 whitespace-nowrap border-b border-[#FF8A3D] pb-2 font-['Roboto_Serif'] text-sm font-bold">
                 <span className="text-[#FF8A3D]">
                   {day
                     .toLocaleDateString("sv-SE", { weekday: "short" })
