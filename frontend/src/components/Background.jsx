@@ -40,7 +40,7 @@ function BackgroundPattern() {
         <img
           src={containerBox}
           alt=""
-          className="absolute bottom-[-500.3px] left-[-1115px] h-[1311.3px] w-[1951.7px] object-contain"
+          className="absolute bottom-[-500.3px] left-[-800px] h-[1311.3px] w-[1951.7px] object-contain"
         />
 
         {/* Penseldrag höger nere */}
