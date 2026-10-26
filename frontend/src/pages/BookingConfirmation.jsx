@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
+import BookingSteps from "../components/Bookingsteps.jsx";
 
 export default function BookingConfirmation() {
   const { id } = useParams();
@@ -91,6 +92,10 @@ export default function BookingConfirmation() {
 
   return (
     <main className="mx-auto max-w-2xl p-4 py-10 text-[#EEE7D6] sm:p-8">
+
+      {/* Bokningssteg – steg 3 */}
+      <BookingSteps currentStep={3} />
+
       <div className="rounded-xl bg-[#202026] p-6 shadow-lg sm:p-8">
 
         {/* Rubrik */}
@@ -199,6 +204,16 @@ export default function BookingConfirmation() {
               vid ditt besök på biografen.
             </p>
 
+          </div>
+
+          {/* Tillbaka till startsidan */}
+          <div className="border-t border-gray-600 pt-6 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center rounded-lg bg-[#FF8A3D] px-8 py-3 font-semibold text-[#070706] transition-all duration-200 hover:bg-[#FF9E5C] hover:shadow-lg"
+            >
+              Tillbaka till startsidan
+            </Link>
           </div>
 
         </div>
