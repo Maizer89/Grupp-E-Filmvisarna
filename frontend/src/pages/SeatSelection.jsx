@@ -14,6 +14,8 @@ export default function SeatSelection() {
   const [ticketCounts, setTicketCounts] = useState({});
   const { seats, loading, error } = useSeats(id);
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState("");
   const {
     screening,
     loading: screeningLoading,
@@ -21,6 +23,50 @@ export default function SeatSelection() {
   } = useScreening(id);
 
   const navigate = useNavigate();
+
+  async function goToCustomerDetails() {
+    if (bookingLoading) return;
+
+    setBookingLoading(true);
+    setBookingError("");
+
+    try {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          screeningId: Number(id),
+          seats: selectedTickets,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Kunde inte reservera platserna.");
+      }
+
+      navigate("/booking/details", {
+        state: {
+          bookingId: data.bookingId,
+          screeningId: id,
+          screening,
+          seats,
+          selectedTickets,
+          selectedSeats,
+          ticketCounts,
+          ticketTypes,
+          totalPrice: data.totalPrice,
+        },
+      });
+    } catch (error) {
+      setBookingError(error.message);
+    } finally {
+      setBookingLoading(false);
+    }
+  }
 
   function updateTicketCount(ticketTypeId, change) {
     setTicketCounts((prev) => ({
@@ -152,15 +198,24 @@ export default function SeatSelection() {
               Tillbaka
             </button>
 
+            {bookingError && (
+              <p role="alert" className="text-sm text-red-400">
+                {bookingError}
+              </p>
+            )}
             {/* Gå vidare */}
             <button
               type="button"
+              onClick={goToCustomerDetails}
               disabled={
-                totalTickets === 0 || selectedSeats.length !== totalTickets
+                bookingLoading ||
+                totalTickets === 0 ||
+                selectedSeats.length !== totalTickets
               }
               className="flex items-center justify-center gap-3 rounded-md bg-[#FF893C] px-6 py-3 font-medium text-[#070706] transition-colors hover:bg-[#FF9E5C] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Gå vidare
+              {bookingLoading ? "Reserverar platser..." : "Gå vidare"}
+
               <svg
                 width="20"
                 height="20"

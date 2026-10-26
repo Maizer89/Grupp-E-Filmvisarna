@@ -6,6 +6,7 @@ import LoggaIn from "./pages/LoggaIn";
 import SkapaKonto from "./pages/SkapaKonto";
 import MinaBokningar from "./pages/MinaBokningar";
 import BookingConfirmation from "./pages/BookingConfirmation";
+import CustomerDetails from "./pages/CustomerDetails.jsx";
 
 function Home() {
   return (
@@ -35,10 +36,11 @@ export default function App() {
           <Route path="/logga-in" element={<LoggaIn />} />
           <Route path="/skapa-konto" element={<SkapaKonto />} />
           <Route path="/mina-bokningar" element={<MinaBokningar />} />
-
-          <Route path="/booking/confirmation/:id"
-                element={<BookingConfirmation />}
-/>
+          <Route path="/booking/details" element={<CustomerDetails />} />
+          <Route
+            path="/booking/confirmation/:id"
+            element={<BookingConfirmation />}
+          />
         </Routes>
       </main>
     </BrowserRouter>
