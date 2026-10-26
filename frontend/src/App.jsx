@@ -6,20 +6,8 @@ import LoggaIn from "./pages/LoggaIn";
 import SkapaKonto from "./pages/SkapaKonto";
 import MinaBokningar from "./pages/MinaBokningar";
 import BookingConfirmation from "./pages/BookingConfirmation";
+import Home from "./pages/Home";
 
-function Home() {
-  return (
-    <div className="p-8 text-white">
-      <h1 className="text-2xl font-bold mb-4">Filmvisarna</h1>
-      <Link
-        to="/screenings"
-        className="inline-block bg-blue-600 px-4 py-2 rounded hover:bg-blue-500 transition"
-      >
-        Visa filmvisningar
-      </Link>
-    </div>
-  );
-}
 
 export default function App() {
   return (
