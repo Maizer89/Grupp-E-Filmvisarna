@@ -51,6 +51,7 @@ export default function SeatSelection() {
       navigate("/booking/details", {
         state: {
           bookingId: data.bookingId,
+          reservedUntil: data.reservedUntil,
           screeningId: id,
           screening,
           seats,

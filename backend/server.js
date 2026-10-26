@@ -428,6 +428,16 @@ app.post("/api/bookings", async (req, res) => {
       );
     }
 
+    const [reservationRows] = await connection.query(
+      `SELECT
+     TIMESTAMPDIFF(SECOND, NOW(), reserved_until) AS secondsRemaining
+   FROM bookings
+   WHERE id = ?`,
+      [bookingId],
+    );
+
+    const secondsRemaining = reservationRows[0].secondsRemaining;
+
     await connection.commit();
     req.session.pendingBookingId = bookingId;
 
@@ -443,6 +453,9 @@ app.post("/api/bookings", async (req, res) => {
       message: "Bokningen har skapats",
       bookingId,
       totalPrice,
+      reservedUntil: new Date(
+        Date.now() + secondsRemaining * 1000,
+      ).toISOString(),
     });
   } catch (error) {
     if (connection) {

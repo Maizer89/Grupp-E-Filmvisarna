@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import BookingSteps from "../components/BookingSteps.jsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ReservationExpiredModal from "../components/ReservationExpiredModal.jsx";
 
 export default function CustomerDetails() {
   const { state } = useLocation();
@@ -11,8 +12,8 @@ export default function CustomerDetails() {
   const [email, setEmail] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
-
   const [changingSeats, setChangingSeats] = useState(false);
+  const [reservationExpired, setReservationExpired] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,8 +28,32 @@ export default function CustomerDetails() {
   const bookedSeats =
     state?.seats?.filter((seat) => state.selectedSeats.includes(seat.id)) || [];
 
+  useEffect(() => {
+    if (!state?.reservedUntil) return;
+
+    const expiresAt = new Date(state.reservedUntil).getTime();
+
+    function checkReservation() {
+      if (Date.now() >= expiresAt) {
+        setReservationExpired(true);
+      }
+    }
+
+    checkReservation();
+
+    const interval = setInterval(checkReservation, 1000);
+
+    return () => clearInterval(interval);
+  }, [state?.reservedUntil]);
+
   async function handleBooking() {
-    if (bookingLoading || changingSeats || !isFormValid || !state?.bookingId) {
+    if (
+      bookingLoading ||
+      changingSeats ||
+      reservationExpired ||
+      !isFormValid ||
+      !state?.bookingId
+    ) {
       return;
     }
 
@@ -51,6 +76,11 @@ export default function CustomerDetails() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 409) {
+          setReservationExpired(true);
+          return;
+        }
+
         throw new Error(data.error || "Kunde inte bekräfta bokningen.");
       }
 
@@ -265,7 +295,12 @@ export default function CustomerDetails() {
           <button
             type="button"
             onClick={handleBooking}
-            disabled={!isFormValid || bookingLoading || changingSeats}
+            disabled={
+              !isFormValid ||
+              bookingLoading ||
+              changingSeats ||
+              reservationExpired
+            }
             className="w-full rounded-md bg-[#FF8A3D] px-5 py-3 font-semibold text-[#070706] hover:bg-[#FF9E5C] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {bookingLoading ? "Bekräftar bokning..." : "Boka biljetter →"}
@@ -274,13 +309,22 @@ export default function CustomerDetails() {
           <button
             type="button"
             onClick={handleChangeSeats}
-            disabled={bookingLoading || changingSeats}
+            disabled={bookingLoading || changingSeats || reservationExpired}
             className="w-full rounded-md border border-[#EEE7D6]/50 px-5 py-3 text-[#EEE7D6] hover:bg-[#202026] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {changingSeats ? "Frigör platser..." : "← Ändra platser"}
           </button>
         </aside>
       </div>
+      {reservationExpired && (
+        <ReservationExpiredModal
+          onConfirm={() =>
+            navigate(`/screenings/${state.screeningId}/seats`, {
+              replace: true,
+            })
+          }
+        />
+      )}
     </main>
   );
 }
