@@ -243,15 +243,32 @@ app.get("/api/screenings/:id/seats", async (req, res) => {
 });
 
 app.post("/api/bookings", async (req, res) => {
-  const { screeningId, seats, customerEmail } = req.body;
+  const { screeningId, seats } = req.body;
+
+  if (req.session.pendingBookingId) {
+    const [existingBookings] = await db.query(
+      `SELECT id
+     FROM bookings
+     WHERE id = ?
+       AND status = 'pending'
+       AND reserved_until > NOW()`,
+      [req.session.pendingBookingId],
+    );
+
+    if (existingBookings.length > 0) {
+      return res.status(409).json({
+        error: "Du har redan en aktiv reservation",
+      });
+    }
+
+    delete req.session.pendingBookingId;
+  }
 
   if (
     !Number.isInteger(screeningId) ||
     screeningId <= 0 ||
     !Array.isArray(seats) ||
-    seats.length === 0 ||
-    typeof customerEmail !== "string" ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)
+    seats.length === 0
   ) {
     return res.status(400).json({
       error: "Ogiltiga bokningsuppgifter",
@@ -394,14 +411,13 @@ app.post("/api/bookings", async (req, res) => {
 
     await connection.query(
       `INSERT INTO bookings (
-        id,
-        screening_id,
-        customer_email,
-        status,
-        reserved_until
-      )
-      VALUES (?, ?, ?, 'pending', DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
-      [bookingId, screeningId, customerEmail, reservationMinutes],
+    id,
+    screening_id,
+    status,
+    reserved_until
+  )
+  VALUES (?, ?, 'pending', DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
+      [bookingId, screeningId, reservationMinutes],
     );
 
     for (const seat of seats) {
@@ -412,7 +428,18 @@ app.post("/api/bookings", async (req, res) => {
       );
     }
 
+    const [reservationRows] = await connection.query(
+      `SELECT
+     TIMESTAMPDIFF(SECOND, NOW(), reserved_until) AS secondsRemaining
+   FROM bookings
+   WHERE id = ?`,
+      [bookingId],
+    );
+
+    const secondsRemaining = reservationRows[0].secondsRemaining;
+
     await connection.commit();
+    req.session.pendingBookingId = bookingId;
 
     // US-14: Skicka ut uppdaterad stolstatus till alla som tittar på samma visning i realtid
     io.to(`screening_${screeningId}`).emit("seat_status_changed", {
@@ -426,6 +453,9 @@ app.post("/api/bookings", async (req, res) => {
       message: "Bokningen har skapats",
       bookingId,
       totalPrice,
+      reservedUntil: new Date(
+        Date.now() + secondsRemaining * 1000,
+      ).toISOString(),
     });
   } catch (error) {
     if (connection) {
@@ -444,20 +474,132 @@ app.post("/api/bookings", async (req, res) => {
   }
 });
 
+app.delete("/api/bookings/:id/reservation", async (req, res) => {
+  const { id } = req.params;
+
+  // Kontrollera att reservationen tillhör besökarens session
+  if (req.session.pendingBookingId !== id) {
+    return res.status(403).json({
+      error: "Du har inte behörighet att avbryta reservationen",
+    });
+  }
+
+  try {
+    const [bookings] = await db.query(
+      `SELECT screening_id
+       FROM bookings
+       WHERE id = ?
+         AND status = 'pending'`,
+      [id],
+    );
+
+    if (bookings.length === 0) {
+      return res.status(404).json({
+        error: "Ingen aktiv reservation hittades",
+      });
+    }
+
+    const screeningId = bookings[0].screening_id;
+
+    const [result] = await db.query(
+      `UPDATE bookings
+       SET status = 'cancelled',
+           reserved_until = NULL
+       WHERE id = ?
+         AND status = 'pending'`,
+      [id],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(409).json({
+        error: "Reservationen kunde inte avbrytas",
+      });
+    }
+
+    // Ta bort reservationen från sessionen
+    delete req.session.pendingBookingId;
+
+    // Uppdatera stolstatus för andra besökare
+    io.to(`screening_${screeningId}`).emit("seat_status_changed", {
+      screeningId,
+    });
+
+    return res.status(200).json({
+      message: "Reservationen har avbrutits",
+    });
+  } catch (error) {
+    console.error("Fel vid avbruten reservation:", error);
+
+    return res.status(500).json({
+      error: "Kunde inte avbryta reservationen",
+    });
+  }
+});
+
 app.patch("/api/bookings/:id/confirm", async (req, res) => {
   const { id } = req.params;
+  const { firstName, lastName, email } = req.body ?? {};
+
+  // Kontrollera att alla kunduppgifter finns
+  if (
+    typeof firstName !== "string" ||
+    typeof lastName !== "string" ||
+    typeof email !== "string" ||
+    !firstName.trim() ||
+    !lastName.trim() ||
+    !email.trim()
+  ) {
+    return res.status(400).json({
+      error: "Förnamn, efternamn och e-postadress måste fyllas i",
+    });
+  }
+
+  // Ta bort eventuella mellanslag
+  const cleanFirstName = firstName.trim();
+  const cleanLastName = lastName.trim();
+  const cleanEmail = email.trim();
+
+  // Kontrollera längder enligt databasens kolumner
+  if (
+    cleanFirstName.length > 100 ||
+    cleanLastName.length > 100 ||
+    cleanEmail.length > 255
+  ) {
+    return res.status(400).json({
+      error: "En eller flera kunduppgifter är för långa",
+    });
+  }
+
+  // Kontrollera e-postadressens format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(cleanEmail)) {
+    return res.status(400).json({
+      error: "Ogiltig e-postadress",
+    });
+  }
+
+  // Kontrollera att reservationen tillhör besökarens session
+  if (req.session.pendingBookingId !== id) {
+    return res.status(403).json({
+      error: "Du har inte behörighet att bekräfta reservationen",
+    });
+  }
 
   try {
     const [result] = await db.query(
       `UPDATE bookings b
-   JOIN screenings s ON b.screening_id = s.id
-   SET b.status = 'confirmed',
-       b.reserved_until = NULL
-   WHERE b.id = ?
-     AND b.status = 'pending'
-     AND b.reserved_until > NOW()
-     AND s.start_time > ?`,
-      [id, getSwedishTime()],
+       JOIN screenings s ON b.screening_id = s.id
+       SET b.status = 'confirmed',
+           b.reserved_until = NULL,
+           b.customer_first_name = ?,
+           b.customer_last_name = ?,
+           b.customer_email = ?
+       WHERE b.id = ?
+         AND b.status = 'pending'
+         AND b.reserved_until > NOW()
+         AND s.start_time > ?`,
+      [cleanFirstName, cleanLastName, cleanEmail, id, getSwedishTime()],
     );
 
     if (result.affectedRows === 0) {
@@ -467,10 +609,16 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
       });
     }
 
+    // Ta bort reservationen från sessionen
+    delete req.session.pendingBookingId;
+
     // US-8: Skicka bokningsbekräftelse via e-post
     try {
       const [bookingInfo] = await db.query(
-        `SELECT b.customer_email, m.title AS movie, s.start_time AS startTime, a.name AS auditorium
+        `SELECT b.customer_email,
+                m.title AS movie,
+                s.start_time AS startTime,
+                a.name AS auditorium
          FROM bookings b
          JOIN screenings s ON b.screening_id = s.id
          JOIN movies m ON s.movie_id = m.id
@@ -481,7 +629,8 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
 
       if (bookingInfo.length > 0) {
         const [seats] = await db.query(
-          `SELECT s.row_number AS rowNumber, s.seat_number AS seatNumber
+          `SELECT s.row_number AS rowNumber,
+                  s.seat_number AS seatNumber
            FROM tickets t
            JOIN seats s ON t.seat_id = s.id
            WHERE t.booking_id = ?
@@ -527,9 +676,13 @@ app.patch("/api/bookings/:id/confirm", async (req, res) => {
 app.get("/api/bookings/:id/confirmation", async (req, res) => {
   const { id } = req.params;
 
+  console.log("Session ID:", req.sessionID);
+  console.log("Sessionens bookingId:", req.session.pendingBookingId);
+  console.log("BookingId från URL:", id);
+
   try {
     const [bookings] = await db.query(
-  `SELECT
+      `SELECT
     b.id AS bookingNumber,
     b.status,
     m.title AS movie,
@@ -540,8 +693,8 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
   JOIN movies m ON s.movie_id = m.id
   JOIN auditoriums a ON s.auditorium_id = a.id
   WHERE b.id = ? AND b.status = 'confirmed'`,
-  [id],
-);
+      [id],
+    );
 
     if (bookings.length === 0) {
       return res.status(404).json({
@@ -561,14 +714,14 @@ app.get("/api/bookings/:id/confirmation", async (req, res) => {
       [id],
     );
 
-return res.status(200).json({
-  bookingNumber: bookings[0].bookingNumber,
-  movie: bookings[0].movie,
-  startTime: bookings[0].startTime,
-  auditorium: bookings[0].auditorium,
-  seats: seats,
-  status: bookings[0].status,
-});
+    return res.status(200).json({
+      bookingNumber: bookings[0].bookingNumber,
+      movie: bookings[0].movie,
+      startTime: bookings[0].startTime,
+      auditorium: bookings[0].auditorium,
+      seats: seats,
+      status: bookings[0].status,
+    });
   } catch (error) {
     console.error("Fel vid hämtning av bokningsbekräftelse:", error);
 
