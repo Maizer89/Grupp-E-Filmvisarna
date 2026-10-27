@@ -70,8 +70,6 @@ export default function MovieDetail() {
   if (error) return <p className="p-6 text-red-500">{error}</p>;
   if (!movie) return null;
 
-  // Kolumnerna description, director, actors och trailer_url är antagna.
-  // Visas bara om de finns i databasen. Kolla DESCRIBE movies; och rätta namnen.
   const actors = tillLista(movie.actors);
   const embed = tillEmbed(movie.trailer_url);
 
