@@ -1,10 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import logo from "../assets/image-15@2x.png";
 import searchIcon from "../assets/Search.svg";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [movies, setMovies] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!searchOpen && !menuOpen) return;
+
+    const controller = new AbortController();
+
+    async function fetchMovies() {
+      try {
+        const response = await fetch("/api/movies", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Kunde inte hämta filmer");
+        }
+
+        const data = await response.json();
+        setMovies(data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Fel vid hämtning av filmer:", error);
+        }
+      }
+    }
+
+    fetchMovies();
+
+    return () => controller.abort();
+  }, [searchOpen, menuOpen]);
+
+  const filteredMovies = movies.filter((movie) =>
+    movie.title.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+  );
 
   const navLinkClass = ({ isActive }) =>
     `relative pb-2 transition-colors hover:text-[#FF8A3D] ${
@@ -37,7 +73,13 @@ export default function Header() {
           className="flex items-center gap-7 text-[18px]"
           style={{ fontFamily: "'Roboto Serif', serif" }}
         >
-          <button type="button" aria-label="Sök film">
+          <button
+            type="button"
+            aria-label={searchOpen ? "Stäng sökfält" : "Sök film"}
+            aria-expanded={searchOpen}
+            aria-controls="desktop-search"
+            onClick={() => setSearchOpen((open) => !open)}
+          >
             <img src={searchIcon} alt="" className="h-7 w-7" />
           </button>
 
@@ -49,19 +91,60 @@ export default function Header() {
             Filmer
           </NavLink>
 
-          <span className="cursor-default text-[#EEE7D6]">Om oss</span>
+          <span className="cursor-default pb-2 text-[#EEE7D6]">Om oss</span>
 
           <span className="h-7 w-px bg-[#C8A96B]/40" />
 
           <NavLink to="/logga-in" className={navLinkClass}>
             Logga in
           </NavLink>
-
-          <NavLink to="/skapa-konto" className={navLinkClass}>
-            Skapa konto
-          </NavLink>
         </nav>
       </div>
+
+      {searchOpen && (
+        <div
+          id="desktop-search"
+          className="hidden border-t border-[#C8A96B]/30 bg-[#070706] px-10 py-4 md:block"
+        >
+          <input
+            type="search"
+            placeholder="Sök efter film..."
+            aria-label="Sök efter film"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-md border border-[#C8A96B] bg-[#171717] px-4 py-3 text-[#EEE7D6] outline-none placeholder:text-[#EEE7D6]/50 focus:border-[#FF8A3D]"
+          />
+          {searchQuery.trim() && (
+            <div className="mt-3 rounded-md border border-[#C8A96B]/40 bg-[#171717]">
+              {filteredMovies.length > 0 ? (
+                filteredMovies.map((movie) => (
+                  <Link
+                    key={movie.id}
+                    to="/screenings"
+                    onClick={() => {
+                      setSearchOpen(false);
+                      setSearchQuery("");
+                    }}
+                    className="flex items-center gap-4 border-b border-[#C8A96B]/20 px-4 py-3 text-[#EEE7D6] transition-colors last:border-b-0 hover:bg-[#FF8A3D]/20"
+                  >
+                    <img
+                      src={movie.poster_url}
+                      alt={`Affisch för ${movie.title}`}
+                      className="h-16 w-12 shrink-0 rounded object-cover"
+                    />
+
+                    <span className="font-serif text-base">{movie.title}</span>
+                  </Link>
+                ))
+              ) : (
+                <p className="px-4 py-3 text-[#EEE7D6]/60">
+                  Inga filmer hittades.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Mobilheader */}
       <div className="flex min-h-[65px] items-center gap-3 px-4 md:hidden">
@@ -78,7 +161,11 @@ export default function Header() {
           <span className="h-[2px] w-6 bg-[#FF8A3D]" />
         </button>
 
-        <Link to="/" onClick={closeMenu} className="flex items-center gap-2">
+        <Link
+          to="/"
+          onClick={closeMenu}
+          className="ml-10 flex items-center gap-2"
+        >
           <img src={logo} alt="" className="h-10 w-10 object-contain" />
 
           <span
@@ -99,8 +186,45 @@ export default function Header() {
         >
           <div className="mb-3 flex items-center gap-3 rounded-md border border-[#C8A96B] bg-[#171717] px-3 py-3 text-[#FF8A3D]">
             <img src={searchIcon} alt="" className="h-5 w-5" />
-            <span className="text-sm">Sök film</span>
+
+            <input
+              type="search"
+              placeholder="Sök film..."
+              aria-label="Sök efter film"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#EEE7D6] outline-none placeholder:text-[#FF8A3D]"
+            />
           </div>
+          {searchQuery.trim() && (
+            <div className="mb-3 max-h-64 overflow-y-auto rounded-md border border-[#C8A96B]/40 bg-[#171717]">
+              {filteredMovies.length > 0 ? (
+                filteredMovies.map((movie) => (
+                  <Link
+                    key={movie.id}
+                    to="/screenings"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setSearchQuery("");
+                    }}
+                    className="flex items-center gap-3 border-b border-[#C8A96B]/20 px-3 py-2 text-[#EEE7D6] transition-colors last:border-b-0 hover:bg-[#FF8A3D]/20"
+                  >
+                    <img
+                      src={movie.poster_url}
+                      alt={`Affisch för ${movie.title}`}
+                      className="h-16 w-12 shrink-0 rounded object-cover"
+                    />
+
+                    <span className="font-serif text-sm">{movie.title}</span>
+                  </Link>
+                ))
+              ) : (
+                <p className="px-3 py-3 text-sm text-[#EEE7D6]/60">
+                  Inga filmer hittades.
+                </p>
+              )}
+            </div>
+          )}
 
           <NavLink
             to="/"
@@ -131,14 +255,6 @@ export default function Header() {
             className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
           >
             Logga in <span aria-hidden="true">›</span>
-          </NavLink>
-
-          <NavLink
-            to="/skapa-konto"
-            onClick={closeMenu}
-            className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
-          >
-            Skapa konto <span aria-hidden="true">›</span>
           </NavLink>
         </nav>
       )}
