@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import BookingSteps from "../components/BookingSteps.jsx";
+import BookingSteps from "../components/Bookingsteps.jsx";
 import { useEffect, useState } from "react";
 import ReservationExpiredModal from "../components/ReservationExpiredModal.jsx";
 
