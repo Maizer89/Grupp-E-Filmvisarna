@@ -7,14 +7,54 @@ import { Link } from "react-router-dom";
 const IMAGE_ROOT = "/home";
 
 const knownPosters = [
-  { match: /spirited away/i, file: "poster-spirited-away.webp", genre: "Äventyr", rank: 0 },
-  { match: /mononoke/i, file: "poster-mononoke.webp", genre: "Äventyr | Fantasy", rank: 1 },
-  { match: /levande slott|howl/i, file: "poster-howls-castle.webp", genre: "Äventyr | Fantasy", rank: 2 },
-  { match: /totoro/i, file: "poster-totoro.webp", genre: "Äventyr | Komedi", rank: 3 },
-  { match: /metropolis/i, file: "poster-metropolis.webp", genre: "Science fiction", rank: 4 },
-  { match: /innocence/i, file: "poster-innocence.webp", genre: "Science fiction", rank: 5 },
-  { match: /akira/i, file: "poster-akira.webp", genre: "Science fiction | Action", rank: 6 },
-  { match: /your name/i, file: "poster-your-name.webp", genre: "Romantik | Fantasy", rank: 7 },
+  {
+    match: /spirited away/i,
+    file: "poster-spirited-away.webp",
+    genre: "Äventyr",
+    rank: 0,
+  },
+  {
+    match: /mononoke/i,
+    file: "poster-mononoke.webp",
+    genre: "Äventyr | Fantasy",
+    rank: 1,
+  },
+  {
+    match: /levande slott|howl/i,
+    file: "poster-howls-castle.webp",
+    genre: "Äventyr | Fantasy",
+    rank: 2,
+  },
+  {
+    match: /totoro/i,
+    file: "poster-totoro.webp",
+    genre: "Äventyr | Komedi",
+    rank: 3,
+  },
+  {
+    match: /metropolis/i,
+    file: "poster-metropolis.webp",
+    genre: "Science fiction",
+    rank: 4,
+  },
+  {
+    match: /innocence/i,
+    file: "poster-innocence.webp",
+    genre: "Science fiction",
+    rank: 5,
+  },
+  {
+    match: /akira/i,
+    file: "poster-akira.webp",
+    genre: "Science fiction | Action",
+    rank: 6,
+  },
+  {
+    match: /your name/i,
+    file: "poster-your-name.webp",
+    genre: "Romantik | Fantasy",
+    rank: 7,
+  },
 ];
 
 function imageFor(movie) {
@@ -31,7 +71,9 @@ function imageFor(movie) {
 
   const image = String(movie.poster_url || "");
   const placeholder =
-    /placeholder|placehold|dummyimage|picsum|300\s*[x/]\s*450|\/300\/450/i.test(image);
+    /placeholder|placehold|dummyimage|picsum|300\s*[x/]\s*450|\/300\/450/i.test(
+      image,
+    );
 
   return {
     src: image && !placeholder ? image : null,
@@ -120,12 +162,7 @@ function FilmPoster({ item, upcoming }) {
   );
 }
 
-function MovieRail({
-  title,
-  items,
-  upcoming = false,
-  loading = false,
-}) {
+function MovieRail({ title, items, upcoming = false, loading = false }) {
   const railRef = useRef(null);
 
   function scroll(direction) {
@@ -198,20 +235,17 @@ function MovieRail({
           >
             {/* Laddningsanimation */}
             {loading &&
-              Array.from(
-                { length: upcoming ? 5 : 4 },
-                (_, index) => (
-                  <div
-                    key={`loading-${index}`}
-                    aria-hidden="true"
-                    className={`shrink-0 animate-pulse rounded-lg border border-[#FF8A3D]/30 bg-[#17120f] ${
-                      upcoming
-                        ? "aspect-[5/4] w-[154px] sm:w-[175px] lg:w-[185px] 2xl:w-[210px] min-[1920px]:w-[230px] min-[2560px]:w-[250px]"
-                        : "aspect-[3/4] w-[188px] sm:w-[204px] lg:w-[215px] 2xl:w-[250px] min-[1920px]:w-[280px] min-[2560px]:w-[330px]"
-                    }`}
-                  />
-                )
-              )}
+              Array.from({ length: upcoming ? 5 : 4 }, (_, index) => (
+                <div
+                  key={`loading-${index}`}
+                  aria-hidden="true"
+                  className={`shrink-0 animate-pulse rounded-lg border border-[#FF8A3D]/30 bg-[#17120f] ${
+                    upcoming
+                      ? "aspect-[5/4] w-[154px] sm:w-[175px] lg:w-[185px] 2xl:w-[210px] min-[1920px]:w-[230px] min-[2560px]:w-[250px]"
+                      : "aspect-[3/4] w-[188px] sm:w-[204px] lg:w-[215px] 2xl:w-[250px] min-[1920px]:w-[280px] min-[2560px]:w-[330px]"
+                  }`}
+                />
+              ))}
 
             {/* Filmkort */}
             {!loading &&
@@ -377,7 +411,6 @@ export default function Home() {
   const [screenings, setScreenings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
@@ -425,7 +458,7 @@ export default function Home() {
         screeningResult.status === "rejected"
       ) {
         setError(
-          "Viss filminformation kunde inte hämtas. Kontrollera att backend är igång."
+          "Viss filminformation kunde inte hämtas. Kontrollera att backend är igång.",
         );
       }
 
@@ -442,10 +475,7 @@ export default function Home() {
 
         return Number.isFinite(value) && value > now;
       })
-      .sort(
-        (a, b) =>
-          Date.parse(a.start_time) - Date.parse(b.start_time)
-      );
+      .sort((a, b) => Date.parse(a.start_time) - Date.parse(b.start_time));
 
     const firstScreeningByMovie = new Map();
 
@@ -460,9 +490,7 @@ export default function Home() {
     const featured = movies
       .map((movie) => {
         const poster = imageFor(movie);
-        const show = firstScreeningByMovie.get(
-          Number(movie.id)
-        );
+        const show = firstScreeningByMovie.get(Number(movie.id));
 
         return {
           key: `movie-${movie.id}`,
@@ -470,26 +498,19 @@ export default function Home() {
           image: poster.src,
           genre: poster.genre,
           rank: poster.rank,
-          href: show
-            ? `/screenings/${show.id}/seats`
-            : "/screenings",
+          href: show ? `/screenings/${show.id}/seats` : "/screenings",
           hasScreening: Boolean(show),
         };
       })
       .sort((a, b) => a.rank - b.rank);
 
-    const upcoming = future
-      .slice(0, 16)
-      .map((screening) => ({
-        key: `screening-${screening.id}`,
-        title: screening.movie_title || "Filmvisning",
-        image: imageFor(screening).src,
-        href: `/screenings/${screening.id}/seats`,
-        dateText: swedishDate(
-          screening.start_time,
-          { compact: true }
-        ),
-      }));
+    const upcoming = future.slice(0, 16).map((screening) => ({
+      key: `screening-${screening.id}`,
+      title: screening.movie_title || "Filmvisning",
+      image: imageFor(screening).src,
+      href: `/screenings/${screening.id}/seats`,
+      dateText: swedishDate(screening.start_time, { compact: true }),
+    }));
 
     return {
       featured,
@@ -499,7 +520,6 @@ export default function Home() {
 
   return (
     <div className="relative isolate min-h-screen overflow-hidden bg-[#070706] text-[#EEE7D6]">
-      
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 bg-[position:center_top] bg-[length:auto_100%] bg-no-repeat lg:bg-[length:100%_100%]"
@@ -507,99 +527,6 @@ export default function Home() {
           backgroundImage: `url('${IMAGE_ROOT}/figma-background.webp')`,
         }}
       />
-
-      {/* Header */}
-      <header className="absolute inset-x-0 top-0 z-30 flex h-[82px] items-center justify-between border-b border-white/10 bg-[#070706]/80 px-4 backdrop-blur-[2px] sm:px-8 lg:top-[clamp(52px,4.95vw,72px)] lg:h-[150px] lg:px-[4.9%]">
-        <Link
-          to="/"
-          onClick={() => setMenuOpen(false)}
-          aria-label="Filmvisarna – startsida"
-          className="flex min-w-0 items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#FF8A3D] lg:gap-2"
-        >
-          <img
-            src={`${IMAGE_ROOT}/logo-reel.webp`}
-            alt=""
-            className="h-12 w-12 shrink-0 object-contain sm:h-[65px] sm:w-[65px] lg:h-[103px] lg:w-[103px]"
-          />
-
-          <img
-            src={`${IMAGE_ROOT}/figma-logo-type.webp`}
-            alt="FILMVISARNA"
-            className="h-auto w-[175px] object-contain sm:w-[235px] lg:w-[350px]"
-          />
-        </Link>
-
-        <div className="flex items-center gap-4 lg:gap-9">
-          <Link
-            to="/screenings"
-            aria-label="Sök filmer"
-            className="hidden text-[#FF8A3D] transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#FF8A3D] sm:block"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              className="h-6 w-6 lg:h-8 lg:w-8"
-              aria-hidden="true"
-            >
-              <circle cx="10.75" cy="10.75" r="6.5" />
-              <path
-                d="m16 16 5 5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </Link>
-
-          <button
-            type="button"
-            aria-label={
-              menuOpen ? "Stäng menyn" : "Öppna menyn"
-            }
-            aria-controls="home-nav"
-            aria-expanded={menuOpen}
-            onClick={() =>
-              setMenuOpen((open) => !open)
-            }
-            className="rounded-lg border border-[#FF8A3D]/60 px-3 py-1 text-2xl text-[#FF8A3D] sm:hidden"
-          >
-            {menuOpen ? "×" : "☰"}
-          </button>
-
-          <nav
-            id="home-nav"
-            aria-label="Huvudmeny"
-            className={`${
-              menuOpen ? "flex" : "hidden"
-            } absolute inset-x-0 top-full flex-col gap-1 border-b border-[#FF8A3D]/30 bg-[#070706]/95 px-6 py-4 sm:static sm:flex sm:flex-row sm:items-center sm:gap-8 sm:border-0 sm:bg-transparent sm:p-0 lg:gap-11`}
-          >
-            <Link
-              to="/"
-              aria-current="page"
-              onClick={() => setMenuOpen(false)}
-              className="border-b-2 border-[#FF8A3D] px-1 py-2 font-serif text-[#C8A96B] transition-colors hover:text-[#FF8A3D]"
-            >
-              Hem
-            </Link>
-
-            <Link
-              to="/screenings"
-              onClick={() => setMenuOpen(false)}
-              className="border-b-2 border-transparent px-1 py-2 font-serif text-[#EEE7D6] transition-colors hover:border-[#FF8A3D] hover:text-[#FF8A3D]"
-            >
-              Filmer
-            </Link>
-
-            <a
-              href="#om-oss"
-              onClick={() => setMenuOpen(false)}
-              className="border-b-2 border-transparent px-1 py-2 font-serif text-[#EEE7D6] transition-colors hover:border-[#FF8A3D] hover:text-[#FF8A3D]"
-            >
-              Om oss
-            </a>
-          </nav>
-        </div>
-      </header>
 
       {/* Hero */}
       <section
