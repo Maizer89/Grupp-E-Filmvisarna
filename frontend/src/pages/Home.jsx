@@ -498,7 +498,7 @@ export default function Home() {
           image: poster.src,
           genre: poster.genre,
           rank: poster.rank,
-          href: show ? `/screenings/${show.id}/seats` : "/screenings",
+          href: `/movies/${movie.id}`,
           hasScreening: Boolean(show),
         };
       })
