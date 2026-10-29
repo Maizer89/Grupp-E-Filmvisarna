@@ -1,8 +1,8 @@
 import SeatMap from "../components/SeatMap.jsx";
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import TicketSelector from "../components/TicketSelector";
-import BookingSteps from "../components/BookingSteps.jsx";
+import BookingSteps from "../components/Bookingsteps.jsx";
 import useSeats from "../hooks/useSeats.js";
 import useTicketTypes from "../hooks/useTicketTypes.js";
 import useScreening from "../hooks/useScreening.js";
@@ -12,10 +12,28 @@ export default function SeatSelection() {
   const { id } = useParams();
   const { ticketTypes } = useTicketTypes();
   const [ticketCounts, setTicketCounts] = useState({});
-  const { seats, loading, error } = useSeats(id);
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [seatConflictMessage, setSeatConflictMessage] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
+
+  // Deselect seats if reserved by another user and display notification (Card 14.4)
+  const handleSeatsTaken = useCallback((takenSeatIds) => {
+    setSelectedSeats((prevSelected) => {
+      const hasConflict = prevSelected.some((seatId) => takenSeatIds.includes(seatId));
+
+      if (hasConflict) {
+        setSeatConflictMessage(
+          "En eller flera av dina valda platser blev precis reserverade av en annan besökare.",
+        );
+        return prevSelected.filter((seatId) => !takenSeatIds.includes(seatId));
+      }
+
+      return prevSelected;
+    });
+  }, []);
+
+  const { seats, loading, error } = useSeats(id, handleSeatsTaken);
   const {
     screening,
     loading: screeningLoading,
@@ -151,6 +169,23 @@ export default function SeatSelection() {
               BIODUK
             </p>
           </div>
+
+          {/* Seat conflict warning banner (Card 14.4) */}
+          {seatConflictMessage && (
+            <div className="mx-auto mb-6 flex w-full max-w-[600px] items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/15 p-4 text-sm text-amber-200">
+              <div className="flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{seatConflictMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSeatConflictMessage("")}
+                className="ml-3 font-bold text-amber-300 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <SeatMap
             seats={seats}
