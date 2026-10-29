@@ -81,8 +81,6 @@ export default function MovieDetail() {
   if (error) return <p className="mx-auto max-w-5xl px-6 py-8 text-red-500">{error}</p>;
   if (!movie) return null;
 
-  // Kolumnerna description, director, actors, trailer_url, genre och release_year är antagna.
-  // Visas bara om de finns i databasen. Kolla DESCRIBE movies; och rätta namnen.
   const actors = tillLista(movie.actors);
   const embed = tillEmbed(movie.trailer_url);
   const year = movie.release_year || movie.year;
