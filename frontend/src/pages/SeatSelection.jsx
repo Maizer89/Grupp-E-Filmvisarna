@@ -12,7 +12,7 @@ export default function SeatSelection() {
   const { id } = useParams();
   const { ticketTypes } = useTicketTypes();
   const [ticketCounts, setTicketCounts] = useState({});
-  const { seats, loading, error } = useSeats(id);
+  const { seats, loading, error, fetchSeats } = useSeats(id);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
@@ -45,6 +45,14 @@ export default function SeatSelection() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (
+          response.status === 409 &&
+          data.error?.includes("stolar är redan bokade eller reserverade")
+        ) {
+          await fetchSeats();
+          setSelectedSeats([]);
+        }
+
         throw new Error(data.error || "Kunde inte reservera platserna.");
       }
 
