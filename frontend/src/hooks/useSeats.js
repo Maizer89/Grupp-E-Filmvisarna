@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
+import { io } from "socket.io-client";
 
-export default function useSeats(id) {
+export default function useSeats(id, onSeatsTaken) {
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchSeats = useCallback(async () => {
+    if (!id) return;
+
     setLoading(true);
     setError(null);
 
@@ -18,8 +21,8 @@ export default function useSeats(id) {
 
       const data = await response.json();
       setSeats(data);
-    } catch (error) {
-      console.error("Fel vid hämtning av stolar:", error);
+    } catch (err) {
+      console.error("Fel vid hämtning av stolar:", err);
       setError("Kunde inte hämta stolarna. Försök igen senare.");
     } finally {
       setLoading(false);
@@ -28,7 +31,45 @@ export default function useSeats(id) {
 
   useEffect(() => {
     fetchSeats();
-  }, [fetchSeats]);
 
-  return { seats, loading, error, fetchSeats };
+    // Anslut till Socket.IO
+    const socket = io();
+
+    // Anslut till rätt visning
+    socket.emit("join_screening", id);
+
+    // Lyssna efter uppdateringar av stolar
+    socket.on("seat_status_changed", (data) => {
+      if (data?.seatIds && data.seatIds.length > 0) {
+        setSeats((prevSeats) =>
+          prevSeats.map((seat) =>
+            data.seatIds.includes(seat.id)
+              ? { ...seat, isAvailable: data.isAvailable }
+              : seat,
+          ),
+        );
+
+        // Avmarkera stolar som reserverats av någon annan
+        if (data.isAvailable === false && onSeatsTaken) {
+          onSeatsTaken(data.seatIds);
+        }
+      } else {
+        // Hämta om stolar vid avbokning eller utgången reservation
+        fetchSeats();
+      }
+    });
+
+    return () => {
+      socket.emit("leave_screening", id);
+      socket.disconnect();
+    };
+  }, [id, fetchSeats, onSeatsTaken]);
+
+  return {
+    seats,
+    loading,
+    error,
+    fetchSeats,
+    refetchSeats: fetchSeats,
+  };
 }
