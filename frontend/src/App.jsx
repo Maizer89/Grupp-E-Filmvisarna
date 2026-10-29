@@ -10,6 +10,7 @@ import MinaBokningar from "./pages/MinaBokningar";
 import Background from "./components/Background";
 import Header from "./components/Header.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import MovieDetail from "./pages/MovieDetail.jsx";
 
 function NotFound() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
             {/* Filmer och platsbokning */}
             <Route path="/screenings" element={<Screenings />} />
             <Route path="/screenings/:id/seats" element={<SeatSelection />} />
+            <Route path="/movies/:id" element={<MovieDetail />} />
 
             {/* Kunduppgifter och bokningsbekräftelse */}
             <Route path="/booking/details" element={<CustomerDetails />} />
