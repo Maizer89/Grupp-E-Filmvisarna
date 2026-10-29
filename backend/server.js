@@ -162,15 +162,18 @@ app.get("/api/screenings/:id", async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT
-        s.id,
-        s.start_time,
-        m.id AS movie_id,
-        m.title AS movie_title,
-        a.name AS auditorium_name
-      FROM screenings s
-      JOIN movies m ON s.movie_id = m.id
-      JOIN auditoriums a ON s.auditorium_id = a.id
-      WHERE s.id = ?`,
+    s.id,
+    s.start_time,
+    m.id AS movie_id,
+    m.title AS movie_title,
+    m.poster_url,
+    m.duration,
+    m.age_limit,
+    a.name AS auditorium_name
+  FROM screenings s
+  JOIN movies m ON s.movie_id = m.id
+  JOIN auditoriums a ON s.auditorium_id = a.id
+  WHERE s.id = ?`,
       [id],
     );
 
