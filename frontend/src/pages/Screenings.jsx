@@ -15,9 +15,7 @@ export default function Screenings() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(
-          `http://localhost:3000/api/screenings?date=${date}`,
-        );
+        const res = await fetch(`/api/screenings?date=${date}`);
         if (!res.ok) {
           throw new Error("Kunde inte hämta visningar");
         }
