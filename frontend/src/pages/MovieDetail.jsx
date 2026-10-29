@@ -38,7 +38,10 @@ function tillEmbed(url) {
 function tillLista(varde) {
   if (!varde) return [];
   if (Array.isArray(varde)) return varde;
-  return String(varde).split(",").map((namn) => namn.trim()).filter(Boolean);
+  return String(varde)
+    .split(",")
+    .map((namn) => namn.trim())
+    .filter(Boolean);
 }
 
 export default function MovieDetail() {
@@ -77,9 +80,46 @@ export default function MovieDetail() {
     };
   }, [movieId]);
 
-  if (loading) return <p className="mx-auto max-w-5xl px-6 py-8 text-white">{TEXTER.laddar}</p>;
-  if (error) return <p className="mx-auto max-w-5xl px-6 py-8 text-red-500">{error}</p>;
-  if (!movie) return null;
+  if (loading)
+    return (
+      <p className="mx-auto max-w-5xl px-6 py-8 text-white">{TEXTER.laddar}</p>
+    );
+  if (error) {
+    return (
+      <main className="mx-auto flex min-h-[65vh] max-w-5xl items-center justify-center px-4 py-12 text-[#EEE7D6]">
+        <div className="w-full max-w-lg rounded-xl border border-[#FF8A3D]/40 bg-[#202026] p-8 text-center shadow-xl sm:p-12">
+          <div className="mb-5 text-5xl" aria-hidden="true">
+            🎬
+          </div>
+
+          <h1 className="mb-4 font-['Roboto_Serif'] text-3xl font-bold text-[#FF8A3D]">
+            Filmen kunde inte hittas
+          </h1>
+
+          <p role="alert" className="mb-8 text-[#EEE7D6]/70">
+            {error}
+          </p>
+
+          <Link
+            to="/screenings"
+            className="inline-flex items-center justify-center rounded-lg bg-[#FF8A3D] px-6 py-3 font-semibold text-[#070706] transition-colors hover:bg-[#FF9E5C]"
+          >
+            ← Tillbaka till filmer
+          </Link>
+        </div>
+      </main>
+    );
+  }
+  if (!movie) {
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-8 text-[#EEE7D6]">
+        <p>Filmen kunde inte hittas.</p>
+        <Link to="/screenings" className="mt-4 inline-block text-[#FF8A3D]">
+          Tillbaka till filmer
+        </Link>
+      </div>
+    );
+  }
 
   const actors = tillLista(movie.actors);
   const embed = tillEmbed(movie.trailer_url);
@@ -88,7 +128,10 @@ export default function MovieDetail() {
   // Andra filmer (en per film) från visningslistan, utan den aktuella
   const andra = [];
   for (const s of screenings) {
-    if (s.movie_id !== movie.id && !andra.some((f) => f.movie_id === s.movie_id)) {
+    if (
+      s.movie_id !== movie.id &&
+      !andra.some((f) => f.movie_id === s.movie_id)
+    ) {
       andra.push(s);
     }
   }
@@ -165,7 +208,9 @@ export default function MovieDetail() {
         <p className="mb-4 text-xs text-[#EEE7D6]/80">{TEXTER.visningarInfo}</p>
         <ScreeningSelector
           movieId={movieId}
-          onSelect={(screeningId) => navigate(`/screenings/${screeningId}/seats`)}
+          onSelect={(screeningId) =>
+            navigate(`/screenings/${screeningId}/seats`)
+          }
         />
       </section>
 
@@ -215,12 +260,20 @@ export default function MovieDetail() {
                       className="h-20 w-14 shrink-0 rounded border border-[#FF8A3D] bg-[#202026] object-cover"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-white">{f.movie_title}</p>
+                      <p className="truncate font-semibold text-white">
+                        {f.movie_title}
+                      </p>
                       <p className="text-xs text-[#EEE7D6]/70">
-                        {f.duration} {TEXTER.min} | {TEXTER.franAlder} {f.age_limit} {TEXTER.ar}
+                        {f.duration} {TEXTER.min} | {TEXTER.franAlder}{" "}
+                        {f.age_limit} {TEXTER.ar}
                       </p>
                     </div>
-                    <span className="text-2xl text-[#FF8A3D]" aria-hidden="true">›</span>
+                    <span
+                      className="text-2xl text-[#FF8A3D]"
+                      aria-hidden="true"
+                    >
+                      ›
+                    </span>
                   </Link>
                 </li>
               ))}
