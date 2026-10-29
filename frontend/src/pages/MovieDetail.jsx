@@ -24,8 +24,6 @@ const TEXTER = {
   ar: "år",
 };
 
-// Affischer och genrer. Samma bilder och samma titelmatchning som startsidan (Home.jsx),
-// eftersom poster_url i databasen är en platshållare för flera filmer.
 const IMAGE_ROOT = "/home";
 
 const knownPosters = [
@@ -39,7 +37,6 @@ const knownPosters = [
   { match: /your name/i, file: "poster-your-name.webp", genre: "Romantik | Fantasy" },
 ];
 
-// Ger bild och genre för en film: först startsidans bilder, sedan poster_url (om den inte är en platshållare)
 function affischFor(titel, posterUrl) {
   const kand = knownPosters.find((p) => p.match.test(String(titel || "")));
   if (kand) return { src: `${IMAGE_ROOT}/${kand.file}`, genre: kand.genre };
@@ -84,7 +81,6 @@ function Affisch({ src, titel, className }) {
   return <img src={src} alt={`Affisch för ${titel}`} onError={() => setFelSrc(src)} className={className} />;
 }
 
-// Veckovy med visningar för en film (egen kod i den här filen, inga importer från gruppen)
 function Visningar({ visningar, onSelect }) {
   const [veckoOffset, setVeckoOffset] = useState(0);
   const farger = ["#C8A96B", "#FF6685"];
@@ -307,7 +303,6 @@ export default function MovieDetail() {
         </div>
       </section>
 
-      {/* Visningar för just den här filmen (gruppens egen komponent) */}
       <section className="mt-10">
         <h2 className="font-['Roboto_Serif'] text-3xl text-white sm:text-4xl">
           {TEXTER.visningar}
