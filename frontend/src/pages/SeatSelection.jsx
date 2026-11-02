@@ -1,6 +1,6 @@
 import SeatMap from "../components/SeatMap.jsx";
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import TicketSelector from "../components/TicketSelector";
 import BookingSteps from "../components/Bookingsteps.jsx";
 import useSeats from "../hooks/useSeats.js";
@@ -18,6 +18,19 @@ export default function SeatSelection() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [showSchedule, setShowSchedule] = useState(false);
+  const scheduleRef = useRef(null);
+
+  useEffect(() => {
+    if (!showSchedule) return;
+
+    // Scrolla automatiskt endast på mobil och surfplatta
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      scheduleRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [showSchedule]);
 
   // Deselect seats if reserved by another user and display notification (Card 14.4)
   const handleSeatsTaken = useCallback((takenSeatIds) => {
@@ -168,7 +181,7 @@ export default function SeatSelection() {
           </div>
 
           {showSchedule && (
-            <div className="mx-auto mb-10 w-full">
+            <div ref={scheduleRef} className="mx-auto mb-10 w-full scroll-mt-6">
               <ScreeningSelector
                 movieId={screening.movie_id}
                 onSelect={(screeningId) => {
