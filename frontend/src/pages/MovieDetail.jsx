@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import ScreeningSelector from "../components/ScreeningSelector";
 
 // User story 4 (filmdetalj) och 22 (responsiv).
 // Route: /movies/:id  (länkas från Screenings med screening.movie_id)
@@ -27,14 +28,42 @@ const TEXTER = {
 const IMAGE_ROOT = "/home";
 
 const knownPosters = [
-  { match: /spirited away/i, file: "poster-spirited-away.webp", genre: "Äventyr" },
-  { match: /mononoke/i, file: "poster-mononoke.webp", genre: "Äventyr | Fantasy" },
-  { match: /levande slott|howl/i, file: "poster-howls-castle.webp", genre: "Äventyr | Fantasy" },
+  {
+    match: /spirited away/i,
+    file: "poster-spirited-away.webp",
+    genre: "Äventyr",
+  },
+  {
+    match: /mononoke/i,
+    file: "poster-mononoke.webp",
+    genre: "Äventyr | Fantasy",
+  },
+  {
+    match: /levande slott|howl/i,
+    file: "poster-howls-castle.webp",
+    genre: "Äventyr | Fantasy",
+  },
   { match: /totoro/i, file: "poster-totoro.webp", genre: "Äventyr | Komedi" },
-  { match: /metropolis/i, file: "poster-metropolis.webp", genre: "Science fiction" },
-  { match: /innocence/i, file: "poster-innocence.webp", genre: "Science fiction" },
-  { match: /akira/i, file: "poster-akira.webp", genre: "Science fiction | Action" },
-  { match: /your name/i, file: "poster-your-name.webp", genre: "Romantik | Fantasy" },
+  {
+    match: /metropolis/i,
+    file: "poster-metropolis.webp",
+    genre: "Science fiction",
+  },
+  {
+    match: /innocence/i,
+    file: "poster-innocence.webp",
+    genre: "Science fiction",
+  },
+  {
+    match: /akira/i,
+    file: "poster-akira.webp",
+    genre: "Science fiction | Action",
+  },
+  {
+    match: /your name/i,
+    file: "poster-your-name.webp",
+    genre: "Romantik | Fantasy",
+  },
 ];
 
 function affischFor(titel, posterUrl) {
@@ -42,7 +71,10 @@ function affischFor(titel, posterUrl) {
   if (kand) return { src: `${IMAGE_ROOT}/${kand.file}`, genre: kand.genre };
 
   const bild = String(posterUrl || "");
-  const platshallare = /placeholder|placehold|dummyimage|picsum|300\s*[x/]\s*450|\/300\/450/i.test(bild);
+  const platshallare =
+    /placeholder|placehold|dummyimage|picsum|300\s*[x/]\s*450|\/300\/450/i.test(
+      bild,
+    );
   return { src: bild && !platshallare ? bild : null, genre: null };
 }
 
@@ -59,7 +91,10 @@ function tillEmbed(url) {
 function tillLista(varde) {
   if (!varde) return [];
   if (Array.isArray(varde)) return varde;
-  return String(varde).split(",").map((namn) => namn.trim()).filter(Boolean);
+  return String(varde)
+    .split(",")
+    .map((namn) => namn.trim())
+    .filter(Boolean);
 }
 
 // Visar affischen. Saknas bilden eller går den inte att ladda visas en ruta med titeln i stället.
@@ -78,7 +113,14 @@ function Affisch({ src, titel, className }) {
       </div>
     );
   }
-  return <img src={src} alt={`Affisch för ${titel}`} onError={() => setFelSrc(src)} className={className} />;
+  return (
+    <img
+      src={src}
+      alt={`Affisch för ${titel}`}
+      onError={() => setFelSrc(src)}
+      className={className}
+    />
+  );
 }
 
 function Visningar({ visningar, onSelect }) {
@@ -102,7 +144,9 @@ function Visningar({ visningar, onSelect }) {
     const datum = dag.toLocaleDateString("sv-SE");
     return visningar.filter((v) => {
       const start = new Date(v.start_time);
-      const startDatum = start.toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+      const startDatum = start.toLocaleDateString("sv-SE", {
+        timeZone: "Europe/Stockholm",
+      });
       return startDatum === datum && start > nu;
     });
   };
@@ -121,7 +165,11 @@ function Visningar({ visningar, onSelect }) {
         >
           ← Föregående vecka
         </button>
-        <button type="button" onClick={() => setVeckoOffset((v) => v + 1)} className={veckoKnapp}>
+        <button
+          type="button"
+          onClick={() => setVeckoOffset((v) => v + 1)}
+          className={veckoKnapp}
+        >
           Nästa vecka →
         </button>
       </div>
@@ -137,9 +185,14 @@ function Visningar({ visningar, onSelect }) {
             >
               <h3 className="mb-1.5 whitespace-nowrap border-b border-[#FF8A3D] pb-2 font-['Roboto_Serif'] text-sm font-bold">
                 <span className="text-[#FF8A3D]">
-                  {dag.toLocaleDateString("sv-SE", { weekday: "short" }).replace(/^./, (c) => c.toUpperCase())}
+                  {dag
+                    .toLocaleDateString("sv-SE", { weekday: "short" })
+                    .replace(/^./, (c) => c.toUpperCase())}
                 </span>{" "}
-                {dag.toLocaleDateString("sv-SE", { day: "numeric", month: "short" })}
+                {dag.toLocaleDateString("sv-SE", {
+                  day: "numeric",
+                  month: "short",
+                })}
               </h3>
 
               <div className="space-y-1.5">
@@ -152,7 +205,10 @@ function Visningar({ visningar, onSelect }) {
                       type="button"
                       onClick={() => onSelect(v.id)}
                       className="w-full rounded-md border px-1.5 py-1 text-left text-xs transition-colors hover:bg-[#202026]"
-                      style={{ borderColor: farger[i % 2], color: farger[i % 2] }}
+                      style={{
+                        borderColor: farger[i % 2],
+                        color: farger[i % 2],
+                      }}
                     >
                       <span className="block text-base font-bold leading-tight">
                         {new Date(v.start_time).toLocaleTimeString("sv-SE", {
@@ -220,21 +276,64 @@ export default function MovieDetail() {
     };
   }, [movieId]);
 
-  if (loading) return <p className="mx-auto max-w-5xl px-6 py-8 text-white">{TEXTER.laddar}</p>;
-  if (error) return <p className="mx-auto max-w-5xl px-6 py-8 text-red-500">{error}</p>;
-  if (!movie) return null;
+  if (loading)
+    return (
+      <p className="mx-auto max-w-5xl px-6 py-8 text-white">{TEXTER.laddar}</p>
+    );
+  if (error) {
+    return (
+      <main className="mx-auto flex min-h-[65vh] max-w-5xl items-center justify-center px-4 py-12 text-[#EEE7D6]">
+        <div className="w-full max-w-lg rounded-xl border border-[#FF8A3D]/40 bg-[#202026] p-8 text-center shadow-xl sm:p-12">
+          <div className="mb-5 text-5xl" aria-hidden="true">
+            🎬
+          </div>
+
+          <h1 className="mb-4 font-['Roboto_Serif'] text-3xl font-bold text-[#FF8A3D]">
+            Filmen kunde inte hittas
+          </h1>
+
+          <p role="alert" className="mb-8 text-[#EEE7D6]/70">
+            {error}
+          </p>
+
+          <Link
+            to="/screenings"
+            className="inline-flex items-center justify-center rounded-lg bg-[#FF8A3D] px-6 py-3 font-semibold text-[#070706] transition-colors hover:bg-[#FF9E5C]"
+          >
+            ← Tillbaka till filmer
+          </Link>
+        </div>
+      </main>
+    );
+  }
+  if (!movie) {
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-8 text-[#EEE7D6]">
+        <p>Filmen kunde inte hittas.</p>
+        <Link to="/screenings" className="mt-4 inline-block text-[#FF8A3D]">
+          Tillbaka till filmer
+        </Link>
+      </div>
+    );
+  }
 
   // Kolumnerna description, director, actors, trailer_url, genre och release_year är antagna.
   // Visas bara om de finns i databasen. Kolla DESCRIBE movies; och rätta namnen.
   const actors = tillLista(movie.actors);
   const embed = tillEmbed(movie.trailer_url);
   const year = movie.release_year || movie.year;
-  const affisch = affischFor(movie.title, movie.poster_url || movie.poster || movie.image_url);
+  const affisch = affischFor(
+    movie.title,
+    movie.poster_url || movie.poster || movie.image_url,
+  );
 
   // Andra filmer (en per film) från visningslistan, utan den aktuella
   const andra = [];
   for (const s of screenings) {
-    if (s.movie_id !== movie.id && !andra.some((f) => f.movie_id === s.movie_id)) {
+    if (
+      s.movie_id !== movie.id &&
+      !andra.some((f) => f.movie_id === s.movie_id)
+    ) {
       andra.push(s);
     }
   }
@@ -270,7 +369,9 @@ export default function MovieDetail() {
           </h1>
 
           {(movie.genre || affisch.genre) && (
-            <p className="text-sm italic text-[#C8A96B]">{movie.genre || affisch.genre}</p>
+            <p className="text-sm italic text-[#C8A96B]">
+              {movie.genre || affisch.genre}
+            </p>
           )}
 
           <ul className="flex flex-wrap gap-2">
@@ -308,9 +409,11 @@ export default function MovieDetail() {
           {TEXTER.visningar}
         </h2>
         <p className="mb-4 text-xs text-[#EEE7D6]/80">{TEXTER.visningarInfo}</p>
-        <Visningar
-          visningar={screenings.filter((s) => s.movie_id === Number(movieId))}
-          onSelect={(screeningId) => navigate(`/screenings/${screeningId}/seats`)}
+        <ScreeningSelector
+          movieId={movieId}
+          onSelect={(screeningId) =>
+            navigate(`/screenings/${screeningId}/seats`)
+          }
         />
       </section>
 
@@ -360,12 +463,20 @@ export default function MovieDetail() {
                       className="h-20 w-14 shrink-0 overflow-hidden rounded border border-[#FF8A3D] bg-[#202026] object-cover text-[9px]"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-white">{f.movie_title}</p>
+                      <p className="truncate font-semibold text-white">
+                        {f.movie_title}
+                      </p>
                       <p className="text-xs text-[#EEE7D6]/70">
-                        {f.duration} {TEXTER.min} | {TEXTER.franAlder} {f.age_limit} {TEXTER.ar}
+                        {f.duration} {TEXTER.min} | {TEXTER.franAlder}{" "}
+                        {f.age_limit} {TEXTER.ar}
                       </p>
                     </div>
-                    <span className="text-2xl text-[#FF8A3D]" aria-hidden="true">›</span>
+                    <span
+                      className="text-2xl text-[#FF8A3D]"
+                      aria-hidden="true"
+                    >
+                      ›
+                    </span>
                   </Link>
                 </li>
               ))}

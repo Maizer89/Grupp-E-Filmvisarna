@@ -1,40 +1,55 @@
-import { useState } from "react";
-import ScreeningSelector from "./ScreeningSelector";
+export default function ScreeningInfo({ screening, onToggleSchedule }) {
+  const date = new Date(screening.start_time);
 
-export default function ScreeningInfo({ screening, onSelect }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const formattedDate = date.toLocaleDateString("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    day: "numeric",
+    month: "long",
+  });
+
+  const formattedTime = date.toLocaleTimeString("sv-SE", {
+    timeZone: "Europe/Stockholm",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
-    <div className="mb-10 text-center">
-      <div className="flex items-center justify-center gap-4 text-[#EEE7D6]">
-        <span>{screening.movie_title}</span>
-        <span>|</span>
-        <span>
-          {new Date(screening.start_time).toLocaleString("sv-SE", {
-            timeZone: "Europe/Stockholm",
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </span>
-        <span>|</span>
-        <span>{screening.auditorium_name}</span>
-      </div>
+    <section className="w-full text-[#EEE7D6]">
+      <h2 className="mb-5 text-lg font-semibold">Vald film</h2>
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className="mt-4 rounded bg-[#FF8A3D] px-6 py-2 text-sm text-[#070706]"
-      >
-        Ändra dag eller tid
-      </button>
+      <div className="flex flex-col gap-5 sm:flex-row">
+        <img
+          src={screening.poster_url}
+          alt={`Affisch för ${screening.movie_title}`}
+          className="h-48 w-32 shrink-0 rounded-lg object-cover"
+        />
 
-      {isOpen && (
-        <div className="mt-6">
-          <ScreeningSelector movieId={screening.movie_id} onSelect={onSelect} />
+        <div className="flex flex-1 flex-col">
+          <h3 className="mb-4 text-xl font-bold text-[#FF8A3D]">
+            {screening.movie_title}
+          </h3>
+
+          <div className="space-y-3 text-sm">
+            <p>
+              📅 {formattedDate} kl. {formattedTime}
+            </p>
+
+            <p>📍 {screening.auditorium_name}</p>
+
+            <p className="text-[#EEE7D6]/70">
+              {screening.duration} min | Från {screening.age_limit} år
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onToggleSchedule}
+            className="mt-5 self-start rounded-lg border border-[#FF8A3D] px-4 py-2 text-sm font-medium text-[#FF8A3D] transition-colors hover:bg-[#FF8A3D] hover:text-[#070706]"
+          >
+            Ändra dag eller tid
+          </button>
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }

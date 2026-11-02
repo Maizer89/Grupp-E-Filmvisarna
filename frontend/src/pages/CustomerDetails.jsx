@@ -14,6 +14,7 @@ export default function CustomerDetails() {
   const [bookingError, setBookingError] = useState("");
   const [changingSeats, setChangingSeats] = useState(false);
   const [reservationExpired, setReservationExpired] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,7 +35,11 @@ export default function CustomerDetails() {
     const expiresAt = new Date(state.reservedUntil).getTime();
 
     function checkReservation() {
-      if (Date.now() >= expiresAt) {
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+
+      setTimeLeft(remaining);
+
+      if (remaining === 0) {
         setReservationExpired(true);
       }
     }
@@ -144,6 +149,19 @@ export default function CustomerDetails() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-8 text-[#EEE7D6]">
       <BookingSteps currentStep={2} />
+
+      <div className="mb-6 rounded-lg border border-[#FF8A3D]/40 bg-[#202026] p-4 text-center">
+        <p className="mb-2 text-sm text-[#EEE7D6]">Din reservation går ut om</p>
+
+        <p className="text-3xl font-bold tabular-nums text-[#FF8A3D]">
+          {String(Math.floor(timeLeft / 60)).padStart(2, "0")}:
+          {String(timeLeft % 60).padStart(2, "0")}
+        </p>
+
+        <p className="mt-2 text-xs text-[#EEE7D6]/70">
+          Slutför din bokning innan tiden går ut.
+        </p>
+      </div>
 
       <h1 className="mb-2 text-3xl font-semibold">Dina uppgifter</h1>
       <p className="mb-8 text-[#C8A96B]">Snart är dina platser bokade.</p>
