@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import MovieFilterSection from "../components/MovieFilterSection.jsx";
 
 // Filmvisarnas startsida – React + Tailwind CSS, utan separat Home.css.
 // Grafiken är hämtad från gruppens Figma-export. Filmer och tider kommer från API:et.
@@ -558,11 +559,13 @@ export default function Home() {
         )}
 
         {/* Aktuella filmer */}
+        {/* Filmer på bio med datum- och åldersfilter */}
         <section className="pt-7 lg:pt-12">
-          <MovieRail
-            title="Aktuella filmer"
-            items={featured}
+          <MovieFilterSection
+            movies={movies}
+            screenings={screenings}
             loading={loading}
+            imageFor={imageFor}
           />
         </section>
 
