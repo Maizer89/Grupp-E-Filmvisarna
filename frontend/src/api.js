@@ -19,7 +19,7 @@ async function anropa(vag, metod = "GET", kropp) {
 
 // Skapa konto
 export const registrera = (fornamn, efternamn, epost, losenord) =>
-  anropa("/register", "POST", {
+  anropa("/auth/register", "POST", {
     firstName: fornamn,
     lastName: efternamn,
     email: epost,
@@ -28,9 +28,13 @@ export const registrera = (fornamn, efternamn, epost, losenord) =>
 
 // Logga in
 export const loggaIn = (epost, losenord) =>
-  anropa("/login", "POST", { email: epost, password: losenord });
-export const loggaUt = () => anropa("/logout", "DELETE");
-export const vemArInloggad = () => anropa("/me");
+  anropa("/auth/login", "POST", { email: epost, password: losenord });
+
+// Logga ut
+export const loggaUt = () => anropa("/auth/logout", "DELETE");
+
+// Kontrollera vem som är inloggad
+export const vemArInloggad = () => anropa("/auth/me");
 
 // Mina bokningar
 export const hamtaMinaBokningar = () => anropa("/my-bookings");

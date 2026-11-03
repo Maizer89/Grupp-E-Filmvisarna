@@ -8,6 +8,7 @@ import kontoRouter from "./routes/konto.js";
 import session from "express-session";
 import minaBokningarRouter from "./routes/minaBokningar.js";
 import { sendBookingConfirmation } from "./services/emailService.js";
+import { inloggadAnvandare } from "./routes/konto.js";
 
 const app = express();
 const PORT = 3000;
@@ -69,7 +70,7 @@ app.use(
   }),
 );
 
-app.use("/api", kontoRouter);
+app.use("/api/auth", kontoRouter);
 
 app.use("/api", minaBokningarRouter);
 
@@ -538,7 +539,17 @@ app.delete("/api/bookings/:id/reservation", async (req, res) => {
 
 app.patch("/api/bookings/:id/confirm", async (req, res) => {
   const { id } = req.params;
-  const { firstName, lastName, email } = req.body ?? {};
+  let { firstName, lastName, email } = req.body ?? {};
+
+  // Kontrollera om användaren är inloggad
+  const anvandare = await inloggadAnvandare(req);
+
+  if (anvandare) {
+    // Hämta uppgifterna från kontot istället för formuläret
+    firstName = anvandare.first_name;
+    lastName = anvandare.last_name;
+    email = anvandare.email;
+  }
 
   // Kontrollera att alla kunduppgifter finns
   if (

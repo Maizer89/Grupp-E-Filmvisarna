@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Screenings from "./pages/Screenings";
 import SeatSelection from "./pages/SeatSelection";
@@ -33,15 +39,19 @@ function NotFound() {
   );
 }
 
-export default function App() {
+function AppContent() {
+  const navigate = useNavigate();
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
+
       <div className="min-h-screen bg-[#070706]">
         <Header />
 
         <main className="relative isolate min-h-screen overflow-hidden bg-[#070706]">
           <Background />
+
           <Routes>
             {/* Startsida */}
             <Route path="/" element={<Home />} />
@@ -59,7 +69,12 @@ export default function App() {
             />
 
             {/* Användarkonto */}
-            <Route path="/logga-in" element={<LoggaIn />} />
+            <Route
+              path="/logga-in"
+              element={
+                <LoggaIn vidInloggad={() => navigate("/mina-bokningar")} />
+              }
+            />
             <Route path="/skapa-konto" element={<SkapaKonto />} />
             <Route path="/mina-bokningar" element={<MinaBokningar />} />
 
@@ -68,6 +83,14 @@ export default function App() {
           </Routes>
         </main>
       </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

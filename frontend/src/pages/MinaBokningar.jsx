@@ -23,7 +23,7 @@ function Bokning({ bokning, vidAvbokad }) {
         <p>
           {visaTid(bokning.startTime)} · {bokning.auditorium}
         </p>
-        <p>Stolar: {bokning.seats || "–"}</p>
+        <p>Stolar: {bokning.seats?.length ? bokning.seats.join(", ") : "–"}</p>
         <p className="text-sm text-gray-300">
           Bokningsnummer: {bokning.bookingNumber}
         </p>
