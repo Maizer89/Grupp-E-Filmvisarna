@@ -11,6 +11,7 @@ import Background from "./components/Background";
 import Header from "./components/Header.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import MovieDetail from "./pages/MovieDetail.jsx";
+import OmOss from "./pages/OmOss.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
 
 function NotFound() {
@@ -52,6 +53,8 @@ export default function App() {
             <Route path="/screenings/:id/seats" element={<SeatSelection />} />
             <Route path="/movies/:id" element={<MovieDetail />} />
 
+            {/* Om oss */}
+            <Route path="/om-oss" element={<OmOss />} />
             {/* Kunduppgifter och bokningsbekräftelse */}
             <Route path="/booking/details" element={<CustomerDetails />} />
             <Route
@@ -63,6 +66,7 @@ export default function App() {
             <Route path="/logga-in" element={<LoggaIn />} />
             <Route path="/skapa-konto" element={<SkapaKonto />} />
             <Route path="/mina-bokningar" element={<MinaBokningar />} />
+
 
             {/* 404 – Okänd adress */}
             <Route path="*" element={<NotFound />} />
