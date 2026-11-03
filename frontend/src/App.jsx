@@ -12,6 +12,8 @@ import Header from "./components/Header.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import MovieDetail from "./pages/MovieDetail.jsx";
 import OmOss from "./pages/OmOss.jsx";
+import CookieBanner from "./components/CookieBanner.jsx";
+
 function NotFound() {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center text-[#EEE7D6]">
@@ -70,6 +72,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+              <CookieBanner />
       </div>
     </BrowserRouter>
   );

@@ -1,12 +1,13 @@
 import SeatMap from "../components/SeatMap.jsx";
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import TicketSelector from "../components/TicketSelector";
 import BookingSteps from "../components/Bookingsteps.jsx";
 import useSeats from "../hooks/useSeats.js";
 import useTicketTypes from "../hooks/useTicketTypes.js";
 import useScreening from "../hooks/useScreening.js";
 import ScreeningInfo from "../components/ScreeningInfo";
+import ScreeningSelector from "../components/ScreeningSelector";
 
 export default function SeatSelection() {
   const { id } = useParams();
@@ -16,11 +17,27 @@ export default function SeatSelection() {
   const [seatConflictMessage, setSeatConflictMessage] = useState("");
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [showSchedule, setShowSchedule] = useState(false);
+  const scheduleRef = useRef(null);
+
+  useEffect(() => {
+    if (!showSchedule) return;
+
+    // Scrolla automatiskt endast på mobil och surfplatta
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      scheduleRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [showSchedule]);
 
   // Deselect seats if reserved by another user and display notification (Card 14.4)
   const handleSeatsTaken = useCallback((takenSeatIds) => {
     setSelectedSeats((prevSelected) => {
-      const hasConflict = prevSelected.some((seatId) => takenSeatIds.includes(seatId));
+      const hasConflict = prevSelected.some((seatId) =>
+        takenSeatIds.includes(seatId),
+      );
 
       if (hasConflict) {
         setSeatConflictMessage(
@@ -33,7 +50,7 @@ export default function SeatSelection() {
     });
   }, []);
 
-  const { seats, loading, error } = useSeats(id, handleSeatsTaken);
+  const { seats, loading, error, fetchSeats } = useSeats(id, handleSeatsTaken);
   const {
     screening,
     loading: screeningLoading,
@@ -63,6 +80,14 @@ export default function SeatSelection() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (
+          response.status === 409 &&
+          data.error?.includes("stolar är redan bokade eller reserverade")
+        ) {
+          await fetchSeats();
+          setSelectedSeats([]);
+        }
+
         throw new Error(data.error || "Kunde inte reservera platserna.");
       }
 
@@ -138,18 +163,34 @@ export default function SeatSelection() {
         <>
           <BookingSteps currentStep={1} />
 
-          <ScreeningInfo
-            screening={screening}
-            onSelect={(screeningId) => {
-              navigate(`/screenings/${screeningId}/seats`);
-            }}
-          />
+          <div className="mx-auto mb-6 grid w-full grid-cols-1 gap-6 rounded-xl border border-[#FF8A3D]/30 bg-[#202026] p-5 lg:grid-cols-2 lg:gap-0">
+            <div className="lg:border-r lg:border-[#EEE7D6]/10 lg:pr-6">
+              <ScreeningInfo
+                screening={screening}
+                onToggleSchedule={() => setShowSchedule((prev) => !prev)}
+              />
+            </div>
 
-          <TicketSelector
-            ticketTypes={ticketTypes}
-            ticketCounts={ticketCounts}
-            updateTicketCount={updateTicketCount}
-          />
+            <div className="flex items-center lg:pl-6">
+              <TicketSelector
+                ticketTypes={ticketTypes}
+                ticketCounts={ticketCounts}
+                updateTicketCount={updateTicketCount}
+              />
+            </div>
+          </div>
+
+          {showSchedule && (
+            <div ref={scheduleRef} className="mx-auto mb-10 w-full scroll-mt-6">
+              <ScreeningSelector
+                movieId={screening.movie_id}
+                onSelect={(screeningId) => {
+                  setShowSchedule(false);
+                  navigate(`/screenings/${screeningId}/seats`);
+                }}
+              />
+            </div>
+          )}
 
           <div className="mb-12 mt-10">
             <svg
