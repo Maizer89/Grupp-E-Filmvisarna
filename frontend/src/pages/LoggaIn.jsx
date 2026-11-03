@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loggaIn } from "../api";
+import { Link } from "react-router-dom";
 
 // USER  17: logga in.
 // Använd: <LoggaIn vidInloggad={(anvandare) => navigate('/mina-bokningar')} />
@@ -64,6 +65,15 @@ export default function LoggaIn({ vidInloggad }) {
       >
         Logga in
       </button>
+      <p className="mt-2 text-center text-sm text-[#EEE7D6]/70">
+        Har du inget konto?{" "}
+        <Link
+          to="/skapa-konto"
+          className="font-semibold text-[#FF8A3D] hover:underline"
+        >
+          Skapa konto
+        </Link>
+      </p>
     </form>
   );
 }

@@ -17,6 +17,8 @@ import Background from "./components/Background";
 import Header from "./components/Header.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import MovieDetail from "./pages/MovieDetail.jsx";
+import { useEffect, useState } from "react";
+import { vemArInloggad, loggaUt } from "./api";
 
 function NotFound() {
   return (
@@ -42,12 +44,52 @@ function NotFound() {
 function AppContent() {
   const navigate = useNavigate();
 
+  const [anvandare, setAnvandare] = useState(null);
+  const [kontrollerarInloggning, setKontrollerarInloggning] = useState(true);
+
+  useEffect(() => {
+    let aktiv = true;
+
+    async function kontrolleraInloggning() {
+      try {
+        const data = await vemArInloggad();
+        if (aktiv) setAnvandare(data);
+      } catch (error) {
+        if (aktiv && error.status !== 401) {
+          console.error("Kunde inte kontrollera inloggningen:", error);
+        }
+      } finally {
+        if (aktiv) setKontrollerarInloggning(false);
+      }
+    }
+
+    kontrolleraInloggning();
+
+    return () => {
+      aktiv = false;
+    };
+  }, []);
+
+  async function hanteraUtloggning() {
+    try {
+      await loggaUt();
+      setAnvandare(null);
+      navigate("/");
+    } catch (error) {
+      console.error("Kunde inte logga ut:", error);
+    }
+  }
+
   return (
     <>
       <ScrollToTop />
 
       <div className="min-h-screen bg-[#070706]">
-        <Header />
+        <Header
+          anvandare={anvandare}
+          kontrollerarInloggning={kontrollerarInloggning}
+          vidUtloggning={hanteraUtloggning}
+        />
 
         <main className="relative isolate min-h-screen overflow-hidden bg-[#070706]">
           <Background />
@@ -72,7 +114,12 @@ function AppContent() {
             <Route
               path="/logga-in"
               element={
-                <LoggaIn vidInloggad={() => navigate("/mina-bokningar")} />
+                <LoggaIn
+                  vidInloggad={(inloggadAnvandare) => {
+                    setAnvandare(inloggadAnvandare);
+                    navigate("/mina-bokningar");
+                  }}
+                />
               }
             />
             <Route path="/skapa-konto" element={<SkapaKonto />} />
