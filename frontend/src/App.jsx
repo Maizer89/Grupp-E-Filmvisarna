@@ -19,6 +19,8 @@ import ScrollToTop from "./components/ScrollToTop.jsx";
 import MovieDetail from "./pages/MovieDetail.jsx";
 import { useEffect, useState } from "react";
 import { vemArInloggad, loggaUt } from "./api";
+import OmOss from "./pages/OmOss.jsx";
+import CookieBanner from "./components/CookieBanner.jsx";
 
 function NotFound() {
   return (
@@ -103,6 +105,8 @@ function AppContent() {
             <Route path="/screenings/:id/seats" element={<SeatSelection />} />
             <Route path="/movies/:id" element={<MovieDetail />} />
 
+            {/* Om oss */}
+            <Route path="/om-oss" element={<OmOss />} />
             {/* Kunduppgifter och bokningsbekräftelse */}
             <Route path="/booking/details" element={<CustomerDetails />} />
             <Route
@@ -129,6 +133,7 @@ function AppContent() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <CookieBanner />
       </div>
     </>
   );

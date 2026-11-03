@@ -47,10 +47,9 @@ export default function Header({
   );
 
   const navLinkClass = ({ isActive }) =>
-    `relative pb-2 transition-colors hover:text-[#FF8A3D] ${
-      isActive
-        ? "text-[#FF8A3D] after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:bg-[#FF8A3D]"
-        : "text-[#EEE7D6]"
+    `relative pb-2 transition-colors hover:text-[#FF8A3D] ${isActive
+      ? "text-[#FF8A3D] after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:bg-[#FF8A3D]"
+      : "text-[#EEE7D6]"
     }`;
 
   function closeMenu() {
@@ -95,7 +94,9 @@ export default function Header({
             Filmer
           </NavLink>
 
-          <span className="cursor-default pb-2 text-[#EEE7D6]">Om oss</span>
+          <NavLink to="/om-oss" className={navLinkClass}>
+            Om oss
+          </NavLink>
 
           <span className="h-7 w-px bg-[#C8A96B]/40" />
 
@@ -264,9 +265,13 @@ export default function Header({
             Filmer <span aria-hidden="true">›</span>
           </NavLink>
 
-          <div className="flex cursor-default items-center justify-between px-2 py-3 text-[#FF8A3D]">
+          <NavLink
+            to="/om-oss"
+            onClick={closeMenu}
+            className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
+          >
             Om oss <span aria-hidden="true">›</span>
-          </div>
+          </NavLink>
 
           <div className="my-2 border-t border-[#C8A96B]/40" />
 
