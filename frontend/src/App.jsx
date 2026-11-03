@@ -11,6 +11,7 @@ import Background from "./components/Background";
 import Header from "./components/Header.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import MovieDetail from "./pages/MovieDetail.jsx";
+import CookieBanner from "./components/CookieBanner.jsx";
 
 function NotFound() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+              <CookieBanner />
       </div>
     </BrowserRouter>
   );
