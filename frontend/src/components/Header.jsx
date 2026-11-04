@@ -3,7 +3,11 @@ import { Link, NavLink } from "react-router-dom";
 import logo from "../assets/image-15@2x.png";
 import searchIcon from "../assets/Search.svg";
 
-export default function Header() {
+export default function Header({
+  anvandare,
+  kontrollerarInloggning,
+  vidUtloggning,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [movies, setMovies] = useState([]);
@@ -96,9 +100,26 @@ export default function Header() {
 
           <span className="h-7 w-px bg-[#C8A96B]/40" />
 
-          <NavLink to="/logga-in" className={navLinkClass}>
-            Logga in
-          </NavLink>
+          {!kontrollerarInloggning &&
+            (anvandare ? (
+              <>
+                <NavLink to="/mina-bokningar" className={navLinkClass}>
+                  Mina bokningar
+                </NavLink>
+
+                <button
+                  type="button"
+                  onClick={vidUtloggning}
+                  className="pb-2 text-[#EEE7D6] transition-colors hover:text-[#FF8A3D]"
+                >
+                  Logga ut
+                </button>
+              </>
+            ) : (
+              <NavLink to="/logga-in" className={navLinkClass}>
+                Logga in
+              </NavLink>
+            ))}
         </nav>
       </div>
 
@@ -254,13 +275,37 @@ export default function Header() {
 
           <div className="my-2 border-t border-[#C8A96B]/40" />
 
-          <NavLink
-            to="/logga-in"
-            onClick={closeMenu}
-            className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
-          >
-            Logga in <span aria-hidden="true">›</span>
-          </NavLink>
+          {!kontrollerarInloggning &&
+            (anvandare ? (
+              <>
+                <NavLink
+                  to="/mina-bokningar"
+                  onClick={closeMenu}
+                  className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
+                >
+                  Mina bokningar <span aria-hidden="true">›</span>
+                </NavLink>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    vidUtloggning();
+                  }}
+                  className="flex w-full items-center justify-between px-2 py-3 text-[#FF8A3D]"
+                >
+                  Logga ut <span aria-hidden="true">›</span>
+                </button>
+              </>
+            ) : (
+              <NavLink
+                to="/logga-in"
+                onClick={closeMenu}
+                className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
+              >
+                Logga in <span aria-hidden="true">›</span>
+              </NavLink>
+            ))}
         </nav>
       )}
     </header>

@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import BookingSteps from "../components/Bookingsteps.jsx";
 import { useEffect, useState } from "react";
 import ReservationExpiredModal from "../components/ReservationExpiredModal.jsx";
+import { vemArInloggad } from "../api";
 
 export default function CustomerDetails() {
   const { state } = useLocation();
@@ -10,6 +11,11 @@ export default function CustomerDetails() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+
+  const [anvandare, setAnvandare] = useState(null);
+  const [kontrollerarInloggning, setKontrollerarInloggning] = useState(true);
+  const [inloggningsfel, setInloggningsfel] = useState("");
+
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [changingSeats, setChangingSeats] = useState(false);
@@ -18,17 +24,54 @@ export default function CustomerDetails() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const isFormValid =
-    firstName.trim().length > 0 &&
-    firstName.trim().length <= 100 &&
-    lastName.trim().length > 0 &&
-    lastName.trim().length <= 100 &&
-    email.trim().length <= 255 &&
-    emailRegex.test(email.trim());
+  const isFormValid = anvandare
+    ? true
+    : firstName.trim().length > 0 &&
+      firstName.trim().length <= 100 &&
+      lastName.trim().length > 0 &&
+      lastName.trim().length <= 100 &&
+      email.trim().length <= 255 &&
+      emailRegex.test(email.trim());
 
   const bookedSeats =
     state?.seats?.filter((seat) => state.selectedSeats.includes(seat.id)) || [];
 
+  // Kontrollera om användaren är inloggad
+  useEffect(() => {
+    let aktiv = true;
+
+    async function kontrolleraInloggning() {
+      try {
+        const data = await vemArInloggad();
+
+        if (aktiv) {
+          setAnvandare(data);
+        }
+      } catch (error) {
+        if (!aktiv) return;
+
+        if (error.status === 401) {
+          setAnvandare(null);
+        } else {
+          setInloggningsfel(
+            "Kunde inte kontrollera inloggningen. Försök igen.",
+          );
+        }
+      } finally {
+        if (aktiv) {
+          setKontrollerarInloggning(false);
+        }
+      }
+    }
+
+    kontrolleraInloggning();
+
+    return () => {
+      aktiv = false;
+    };
+  }, []);
+
+  // Kontrollera reservationstiden
   useEffect(() => {
     if (!state?.reservedUntil) return;
 
@@ -56,6 +99,8 @@ export default function CustomerDetails() {
       bookingLoading ||
       changingSeats ||
       reservationExpired ||
+      kontrollerarInloggning ||
+      inloggningsfel ||
       !isFormValid ||
       !state?.bookingId
     ) {
@@ -66,16 +111,23 @@ export default function CustomerDetails() {
     setBookingError("");
 
     try {
+      // Inloggade användare får sina uppgifter från kontot.
+      // Gäster använder uppgifterna från formuläret.
+      const bookingDetails = anvandare
+        ? {}
+        : {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+          };
+
       const response = await fetch(`/api/bookings/${state.bookingId}/confirm`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
-        }),
+        credentials: "include",
+        body: JSON.stringify(bookingDetails),
       });
 
       const data = await response.json();
@@ -112,6 +164,7 @@ export default function CustomerDetails() {
         `/api/bookings/${state.bookingId}/reservation`,
         {
           method: "DELETE",
+          credentials: "include",
         },
       );
 
@@ -174,64 +227,96 @@ export default function CustomerDetails() {
             Vi skickar bokningsbekräftelsen till din e-post.
           </p>
 
-          <p className="mb-6 text-xs text-[#EEE7D6]/60">* Obligatoriska fält</p>
+          {kontrollerarInloggning ? (
+            <p className="mt-6 text-[#EEE7D6]/70">Kontrollerar inloggning...</p>
+          ) : inloggningsfel ? (
+            <p role="alert" className="mt-6 text-red-400">
+              {inloggningsfel}
+            </p>
+          ) : anvandare ? (
+            // Inloggad användare
+            <div className="mt-6 space-y-4">
+              <div>
+                <p className="mb-1 text-sm text-[#EEE7D6]/60">Namn</p>
+                <p className="font-medium">
+                  {anvandare.firstName} {anvandare.lastName}
+                </p>
+              </div>
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="firstName" className="mb-2 block text-sm">
-                Förnamn *
-              </label>
-              <input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                maxLength={100}
-                autoComplete="given-name"
-                placeholder="Ditt förnamn"
-                className="w-full rounded-md border border-[#555560] bg-[#202026] px-3 py-3 text-[#EEE7D6]"
-              />
-            </div>
+              <div>
+                <p className="mb-1 text-sm text-[#EEE7D6]/60">E-post</p>
+                <p className="break-all font-medium">{anvandare.email}</p>
+              </div>
 
-            <div>
-              <label htmlFor="lastName" className="mb-2 block text-sm">
-                Efternamn *
-              </label>
-              <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-                maxLength={100}
-                autoComplete="family-name"
-                placeholder="Ditt efternamn"
-                className="w-full rounded-md border border-[#555560] bg-[#202026] px-3 py-3 text-[#EEE7D6]"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm">
-                E-post *
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                maxLength={255}
-                autoComplete="email"
-                placeholder="namn@exempel.se"
-                className="w-full rounded-md border border-[#555560] bg-[#202026] px-3 py-3 text-[#EEE7D6]"
-              />
-
-              <p className="mt-2 text-xs text-[#EEE7D6]/60">
-                Kontrollera att e-postadressen är rätt innan du bokar.
+              <p className="text-sm text-[#C8A96B]">
+                Bokningen kopplas till ditt konto.
               </p>
             </div>
-          </div>
+          ) : (
+            // Gästbokning
+            <>
+              <p className="mb-6 text-xs text-[#EEE7D6]/60">
+                * Obligatoriska fält
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="firstName" className="mb-2 block text-sm">
+                    Förnamn *
+                  </label>
+                  <input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    maxLength={100}
+                    autoComplete="given-name"
+                    placeholder="Ditt förnamn"
+                    className="w-full rounded-md border border-[#555560] bg-[#202026] px-3 py-3 text-[#EEE7D6]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="lastName" className="mb-2 block text-sm">
+                    Efternamn *
+                  </label>
+                  <input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    maxLength={100}
+                    autoComplete="family-name"
+                    placeholder="Ditt efternamn"
+                    className="w-full rounded-md border border-[#555560] bg-[#202026] px-3 py-3 text-[#EEE7D6]"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="mb-2 block text-sm">
+                    E-post *
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    maxLength={255}
+                    autoComplete="email"
+                    placeholder="namn@exempel.se"
+                    className="w-full rounded-md border border-[#555560] bg-[#202026] px-3 py-3 text-[#EEE7D6]"
+                  />
+
+                  <p className="mt-2 text-xs text-[#EEE7D6]/60">
+                    Kontrollera att e-postadressen är rätt innan du bokar.
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
 
           <p className="mt-6 border-t border-[#303036] pt-4 text-xs text-[#C8A96B]">
             Du betalar dina biljetter på biografen.
@@ -315,6 +400,8 @@ export default function CustomerDetails() {
             onClick={handleBooking}
             disabled={
               !isFormValid ||
+              kontrollerarInloggning ||
+              Boolean(inloggningsfel) ||
               bookingLoading ||
               changingSeats ||
               reservationExpired
@@ -334,6 +421,7 @@ export default function CustomerDetails() {
           </button>
         </aside>
       </div>
+
       {reservationExpired && (
         <ReservationExpiredModal
           onConfirm={() =>

@@ -1,4 +1,10 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+} from "react-router-dom";
 import Home from "./pages/Home";
 import Screenings from "./pages/Screenings";
 import SeatSelection from "./pages/SeatSelection";
@@ -11,6 +17,8 @@ import Background from "./components/Background";
 import Header from "./components/Header.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 import MovieDetail from "./pages/MovieDetail.jsx";
+import { useEffect, useState } from "react";
+import { vemArInloggad, loggaUt } from "./api";
 import OmOss from "./pages/OmOss.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
 
@@ -35,15 +43,59 @@ function NotFound() {
   );
 }
 
-export default function App() {
+function AppContent() {
+  const navigate = useNavigate();
+
+  const [anvandare, setAnvandare] = useState(null);
+  const [kontrollerarInloggning, setKontrollerarInloggning] = useState(true);
+
+  useEffect(() => {
+    let aktiv = true;
+
+    async function kontrolleraInloggning() {
+      try {
+        const data = await vemArInloggad();
+        if (aktiv) setAnvandare(data);
+      } catch (error) {
+        if (aktiv && error.status !== 401) {
+          console.error("Kunde inte kontrollera inloggningen:", error);
+        }
+      } finally {
+        if (aktiv) setKontrollerarInloggning(false);
+      }
+    }
+
+    kontrolleraInloggning();
+
+    return () => {
+      aktiv = false;
+    };
+  }, []);
+
+  async function hanteraUtloggning() {
+    try {
+      await loggaUt();
+      setAnvandare(null);
+      navigate("/");
+    } catch (error) {
+      console.error("Kunde inte logga ut:", error);
+    }
+  }
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
+
       <div className="min-h-screen bg-[#070706]">
-        <Header />
+        <Header
+          anvandare={anvandare}
+          kontrollerarInloggning={kontrollerarInloggning}
+          vidUtloggning={hanteraUtloggning}
+        />
 
         <main className="relative isolate min-h-screen overflow-hidden bg-[#070706]">
           <Background />
+
           <Routes>
             {/* Startsida */}
             <Route path="/" element={<Home />} />
@@ -63,17 +115,34 @@ export default function App() {
             />
 
             {/* Användarkonto */}
-            <Route path="/logga-in" element={<LoggaIn />} />
+            <Route
+              path="/logga-in"
+              element={
+                <LoggaIn
+                  vidInloggad={(inloggadAnvandare) => {
+                    setAnvandare(inloggadAnvandare);
+                    navigate("/mina-bokningar");
+                  }}
+                />
+              }
+            />
             <Route path="/skapa-konto" element={<SkapaKonto />} />
             <Route path="/mina-bokningar" element={<MinaBokningar />} />
-
 
             {/* 404 – Okänd adress */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
-              <CookieBanner />
+        <CookieBanner />
       </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
