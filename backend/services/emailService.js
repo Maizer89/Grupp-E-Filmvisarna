@@ -81,8 +81,14 @@ export function generateBookingEmailHtml({
       ${totalPrice !== undefined ? `<p style="margin: 5px 0;"><strong>Totalt pris:</strong> ${totalPrice} kr</p>` : ""}
     </div>
 
+    <div style="text-align: center; margin: 20px 0;">
+      <p style="margin: 0 0 8px; font-weight: bold;">Din QR-kod:</p>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(bookingNumber)}" alt="QR-kod" style="border: 1px solid #ddd; padding: 6px; border-radius: 6px; background: #fff;" />
+      <p style="font-size: 12px; color: #666; margin: 6px 0 0;">${bookingNumber}</p>
+    </div>
+
     <p style="font-size: 13px; color: #666;">
-      Uppge ditt bokningsnummer vid kassan eller insläppet. Välkommen!
+      Uppge ditt bokningsnummer eller visa upp QR-koden vid kassan eller insläppet. Välkommen!
     </p>
   </div>
   `;
