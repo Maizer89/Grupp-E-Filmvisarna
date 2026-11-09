@@ -84,7 +84,7 @@ export default function OmOss() {
             Upptäck filmer, hitta en visning och boka platser för en filmupplevelse tillsammans.
           </p>
           <Link
-            to="/screenings"
+            to="/"
             className="inline-flex items-center gap-8 rounded-sm bg-[#FF893C] px-5 py-3 text-sm font-semibold text-[#070706] transition-colors hover:bg-[#FF9E5C]"
           >
             Se filmer och visningstider <span aria-hidden="true">→</span>
@@ -115,7 +115,7 @@ export default function OmOss() {
               <br />
               Välj en film och en tid som passar dig.
             </p>
-            <Link to="/screenings" className="text-sm text-[#C8A96B] hover:text-[#FF893C]">
+            <Link to="/" className="text-sm text-[#C8A96B] hover:text-[#FF893C]">
               Hitta din nästa filmupplevelse →
             </Link>
           </article>
@@ -160,7 +160,7 @@ export default function OmOss() {
             <circle cx="12" cy="10" r="2.5" />
           </svg>
           <p className="font-['Roboto_Serif'] text-lg text-white">Hitta till biografen</p>
-          <p className="mt-2 text-xs text-[#EEE7D6]/70">Karta</p>
+          <p className="mt-2 text-xs text-[#EEE7D6]/70">Karta </p>
         </div>
       </section>
     </div>
