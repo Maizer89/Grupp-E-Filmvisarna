@@ -7,6 +7,24 @@ import MovieFilterSection from "../components/MovieFilterSection.jsx";
 
 const IMAGE_ROOT = "/home";
 
+
+// Tillfällig affischvisning inför redovisningen.
+// Byt till false för att återgå till befintliga visningar. Vi behöver hämta dem fråm databasen sen
+const SHOW_DEMO_POSTERS = true;
+
+const demoUpcoming = [
+  { title: "Spirited Away", file: "poster-spirited-away.webp" },
+  { title: "Prinsessan Mononoke", file: "poster-mononoke.webp" },
+  { title: "Min granne Totoro", file: "poster-totoro.webp" },
+  { title: "Metropolis", file: "poster-metropolis.webp" },
+  { title: "Ghost in the Shell 2: Innocence", file: "poster-innocence.webp" },
+].map((poster) => ({
+  key: poster.file,
+  title: poster.title,
+  image: `${IMAGE_ROOT}/${poster.file}`,
+  dateText: "Kommer snart",
+}));
+
 const knownPosters = [
   {
     match: /spirited away/i,
@@ -573,7 +591,8 @@ export default function Home() {
         <section className="mt-16 sm:mt-24 lg:mt-[115px]">
           <MovieRail
             title="På bio snart"
-            items={upcoming}
+          //{ /* items={upcoming} */ } 
+            items={SHOW_DEMO_POSTERS ? demoUpcoming : upcoming}
             upcoming
             loading={loading}
           />
