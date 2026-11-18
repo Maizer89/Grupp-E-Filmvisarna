@@ -38,9 +38,9 @@ export default function AgeRatingFilter({
       >
         <option value="all">Alla filmer</option>
         <option value="0">Barntillåten (0 år)</option>
-        <option value="7">Högst 7 år</option>
-        <option value="11">Högst 11 år</option>
-        <option value="15">Högst 15 år</option>
+        <option value="7">Från 7 år</option>
+        <option value="11">Från 11 år</option>
+        <option value="15">Från 15 år</option>
       </select>
 
       {!compact && (
