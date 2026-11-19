@@ -6,7 +6,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 import Home from "./pages/Home";
-import Screenings from "./pages/Screenings";
 import SeatSelection from "./pages/SeatSelection";
 import CustomerDetails from "./pages/CustomerDetails.jsx";
 import BookingConfirmation from "./pages/BookingConfirmation";
@@ -102,7 +101,6 @@ function AppContent() {
             <Route path="/" element={<Home />} />
 
             {/* Filmer och platsbokning */}
-            <Route path="/screenings" element={<Screenings />} />
             <Route path="/screenings/:id/seats" element={<SeatSelection />} />
             <Route path="/movies/:id" element={<MovieDetail />} />
 
