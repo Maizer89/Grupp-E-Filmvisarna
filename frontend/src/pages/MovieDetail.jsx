@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ScreeningSelector from "../components/ScreeningSelector";
+import MovieCast from "../components/MovieCast";
 
 // User story 4 (filmdetalj) och 22 (responsiv).
 // Route: /movies/:id  (länkas från Screenings med screening.movie_id)
@@ -85,16 +86,6 @@ function tillEmbed(url) {
   const traff = url.match(/[?&]v=([^&]+)|youtu\.be\/([^?&]+)/);
   const videoId = traff && (traff[1] || traff[2]);
   return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-}
-
-// Skådespelare kan komma som lista eller som text med komma emellan
-function tillLista(varde) {
-  if (!varde) return [];
-  if (Array.isArray(varde)) return varde;
-  return String(varde)
-    .split(",")
-    .map((namn) => namn.trim())
-    .filter(Boolean);
 }
 
 // Visar affischen. Saknas bilden eller går den inte att ladda visas en ruta med titeln i stället.
@@ -319,7 +310,6 @@ export default function MovieDetail() {
 
   // Kolumnerna description, director, actors, trailer_url, genre och release_year är antagna.
   // Visas bara om de finns i databasen. Kolla DESCRIBE movies; och rätta namnen.
-  const actors = tillLista(movie.actors);
   const embed = tillEmbed(movie.trailer_url);
   const year = movie.release_year || movie.year;
   const affisch = affischFor(
@@ -343,7 +333,7 @@ export default function MovieDetail() {
     "rounded border border-[#FF8A3D] bg-[#070706]/80 px-2.5 py-1 text-xs text-[#EEE7D6]";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 text-[#EEE7D6] sm:px-6">
+    <div className="mx-auto w-full max-w-[1440px] px-4 py-6 text-[#EEE7D6] sm:px-6 lg:px-10 xl:px-12">
       <Link
         to="/"
         className="mb-4 inline-flex items-center gap-2 text-sm text-white hover:text-[#FF9E5C]"
@@ -386,23 +376,16 @@ export default function MovieDetail() {
 
           <div className="space-y-2 font-['Roboto_Serif'] text-sm leading-relaxed sm:text-base">
             {movie.description && <p>{movie.description}</p>}
-            {(movie.director || actors.length > 0) && (
+            {movie.director && (
               <p className="text-[#EEE7D6]/80">
-                {movie.director && (
-                  <>
-                    <strong>{TEXTER.regi}:</strong> {movie.director}.{" "}
-                  </>
-                )}
-                {actors.length > 0 && (
-                  <>
-                    <strong>{TEXTER.roller}:</strong> {actors.join(", ")}.
-                  </>
-                )}
+                <strong>{TEXTER.regi}:</strong> {movie.director}.
               </p>
             )}
           </div>
         </div>
       </section>
+
+      <MovieCast cast={movie.cast ?? []} />
 
       <section className="mt-10">
         <h2 className="font-['Roboto_Serif'] text-3xl text-white sm:text-4xl">

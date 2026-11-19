@@ -106,17 +106,45 @@ app.get("/api/movies", async (req, res) => {
 });
 
 // US-4: Hämta en specifik film
+
 app.get("/api/movies/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
+    // Hämta filmen
     const [rows] = await db.query("SELECT * FROM movies WHERE id = ?", [id]);
+
     if (rows.length === 0) {
-      return res.status(404).json({ error: "Filmen hittades inte" });
+      return res.status(404).json({
+        error: "Filmen hittades inte",
+      });
     }
-    res.json(rows[0]);
+
+    // Hämta filmens skådespelare
+    const [cast] = await db.query(
+      `SELECT
+        a.id,
+        a.name,
+        a.profile_url,
+        ma.character_name
+       FROM movie_actors ma
+       JOIN actors a ON a.id = ma.actor_id
+       WHERE ma.movie_id = ?
+       ORDER BY a.id`,
+      [id],
+    );
+
+    // Returnera filmen tillsammans med skådespelarna
+    res.json({
+      ...rows[0],
+      cast,
+    });
   } catch (err) {
     console.error("Fel vid hämtning av film:", err);
-    res.status(500).json({ error: "Kunde inte hämta filmen" });
+
+    res.status(500).json({
+      error: "Kunde inte hämta filmen",
+    });
   }
 });
 
