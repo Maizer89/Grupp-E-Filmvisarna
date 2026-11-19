@@ -333,7 +333,7 @@ export default function MovieDetail() {
     "rounded border border-[#FF8A3D] bg-[#070706]/80 px-2.5 py-1 text-xs text-[#EEE7D6]";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 text-[#EEE7D6] sm:px-6">
+    <div className="mx-auto w-full max-w-[1440px] px-4 py-6 text-[#EEE7D6] sm:px-6 lg:px-10 xl:px-12">
       <Link
         to="/"
         className="mb-4 inline-flex items-center gap-2 text-sm text-white hover:text-[#FF9E5C]"
