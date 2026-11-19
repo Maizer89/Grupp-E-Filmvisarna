@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { vemArInloggad, loggaUt } from "./api";
 import OmOss from "./pages/OmOss.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
+import Footer from "./components/Footer.jsx";
 
 function NotFound() {
   return (
@@ -133,6 +134,7 @@ function AppContent() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <Footer />
         <CookieBanner />
       </div>
     </>
