@@ -6,7 +6,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 import Home from "./pages/Home";
-import Screenings from "./pages/Screenings";
 import SeatSelection from "./pages/SeatSelection";
 import CustomerDetails from "./pages/CustomerDetails.jsx";
 import BookingConfirmation from "./pages/BookingConfirmation";
@@ -21,6 +20,7 @@ import { useEffect, useState } from "react";
 import { vemArInloggad, loggaUt } from "./api";
 import OmOss from "./pages/OmOss.jsx";
 import CookieBanner from "./components/CookieBanner.jsx";
+import Footer from "./components/Footer.jsx";
 
 function NotFound() {
   return (
@@ -101,7 +101,6 @@ function AppContent() {
             <Route path="/" element={<Home />} />
 
             {/* Filmer och platsbokning */}
-            <Route path="/screenings" element={<Screenings />} />
             <Route path="/screenings/:id/seats" element={<SeatSelection />} />
             <Route path="/movies/:id" element={<MovieDetail />} />
 
@@ -133,6 +132,7 @@ function AppContent() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
+        <Footer />
         <CookieBanner />
       </div>
     </>

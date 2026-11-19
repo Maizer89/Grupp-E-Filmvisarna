@@ -47,9 +47,10 @@ export default function Header({
   );
 
   const navLinkClass = ({ isActive }) =>
-    `relative pb-2 transition-colors hover:text-[#FF8A3D] ${isActive
-      ? "text-[#FF8A3D] after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:bg-[#FF8A3D]"
-      : "text-[#EEE7D6]"
+    `relative pb-2 transition-colors hover:text-[#FF8A3D] ${
+      isActive
+        ? "text-[#FF8A3D] after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:bg-[#FF8A3D]"
+        : "text-[#EEE7D6]"
     }`;
 
   function closeMenu() {
@@ -88,10 +89,6 @@ export default function Header({
 
           <NavLink to="/" end className={navLinkClass}>
             Hem
-          </NavLink>
-
-          <NavLink to="/screenings" className={navLinkClass}>
-            Filmer
           </NavLink>
 
           <NavLink to="/om-oss" className={navLinkClass}>
@@ -255,14 +252,6 @@ export default function Header({
             className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
           >
             Hem <span aria-hidden="true">›</span>
-          </NavLink>
-
-          <NavLink
-            to="/screenings"
-            onClick={closeMenu}
-            className="flex items-center justify-between px-2 py-3 text-[#FF8A3D]"
-          >
-            Filmer <span aria-hidden="true">›</span>
           </NavLink>
 
           <NavLink

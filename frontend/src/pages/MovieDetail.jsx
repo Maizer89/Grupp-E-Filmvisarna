@@ -10,7 +10,7 @@ const API = "/api";
 const TEXTER = {
   laddar: "Hämtar film...",
   fel: "Kunde inte hämta filmen",
-  tillbaka: "Tillbaka till Filmer",
+  tillbaka: "Tillbaka till startsidan",
   regissor: "Regissör",
   skadespelare: "Skådespelare",
   trailer: "Trailer",
@@ -297,7 +297,7 @@ export default function MovieDetail() {
           </p>
 
           <Link
-            to="/screenings"
+            to="/"
             className="inline-flex items-center justify-center rounded-lg bg-[#FF8A3D] px-6 py-3 font-semibold text-[#070706] transition-colors hover:bg-[#FF9E5C]"
           >
             ← Tillbaka till filmer
@@ -310,8 +310,8 @@ export default function MovieDetail() {
     return (
       <div className="mx-auto max-w-5xl px-6 py-8 text-[#EEE7D6]">
         <p>Filmen kunde inte hittas.</p>
-        <Link to="/screenings" className="mt-4 inline-block text-[#FF8A3D]">
-          Tillbaka till filmer
+        <Link to="/" className="mt-4 inline-block text-[#FF8A3D]">
+          Tillbaka till startsidan
         </Link>
       </div>
     );
@@ -345,7 +345,7 @@ export default function MovieDetail() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 text-[#EEE7D6] sm:px-6">
       <Link
-        to="/screenings"
+        to="/"
         className="mb-4 inline-flex items-center gap-2 text-sm text-white hover:text-[#FF9E5C]"
       >
         <span aria-hidden="true">←</span> {TEXTER.tillbaka}

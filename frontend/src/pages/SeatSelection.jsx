@@ -255,6 +255,7 @@ export default function SeatSelection() {
             {/* Tillbaka */}
             <button
               type="button"
+              onClick={() => navigate(`/movies/${screening.movie_id}`)}
               className="flex items-center justify-center gap-3 rounded-md border border-[#EEE7D6]/50 bg-[#202026] px-6 py-3 text-[#EEE7D6] transition-colors hover:bg-[#303036]"
             >
               <svg
