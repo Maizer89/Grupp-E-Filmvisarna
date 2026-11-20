@@ -42,9 +42,23 @@ export default function Header({
     return () => controller.abort();
   }, [searchOpen, menuOpen]);
 
-  const filteredMovies = movies.filter((movie) =>
-    movie.title.toLowerCase().includes(searchQuery.trim().toLowerCase()),
-  );
+  const filteredMovies = movies.filter((movie) => {
+    const query = searchQuery.trim().toLowerCase();
+
+    const title = movie.title?.toLowerCase() || "";
+    const description = movie.description?.toLowerCase() || "";
+
+    const cast = (movie.cast || [])
+      .map((actor) => `${actor.name || ""} ${actor.character_name || ""}`)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      title.includes(query) ||
+      description.includes(query) ||
+      cast.includes(query)
+    );
+  });
 
   const navLinkClass = ({ isActive }) =>
     `relative pb-2 transition-colors hover:text-[#FF8A3D] ${
@@ -139,7 +153,7 @@ export default function Header({
                 filteredMovies.map((movie) => (
                   <Link
                     key={movie.id}
-                    to="/screenings"
+                    to={`/movies/${movie.id}`}
                     onClick={() => {
                       setSearchOpen(false);
                       setSearchQuery("");
@@ -221,7 +235,7 @@ export default function Header({
                 filteredMovies.map((movie) => (
                   <Link
                     key={movie.id}
-                    to="/screenings"
+                    to={`/movies/${movie.id}`}
                     onClick={() => {
                       setMenuOpen(false);
                       setSearchQuery("");

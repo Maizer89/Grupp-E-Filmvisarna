@@ -95,7 +95,26 @@ app.get("/api/movies", async (req, res) => {
   try {
     const [movies] = await db.query("SELECT * FROM movies");
 
-    return res.status(200).json(movies);
+    const [cast] = await db.query(`
+      SELECT
+        ma.movie_id,
+        a.id,
+        a.name,
+        a.profile_url,
+        ma.character_name
+      FROM movie_actors ma
+      JOIN actors a ON a.id = ma.actor_id
+      ORDER BY a.id
+    `);
+
+    const moviesWithCast = movies.map((movie) => ({
+      ...movie,
+      cast: cast
+        .filter((actor) => actor.movie_id === movie.id)
+        .map(({ movie_id, ...actor }) => actor),
+    }));
+
+    return res.status(200).json(moviesWithCast);
   } catch (error) {
     console.error("Error fetching movies:", error);
 
