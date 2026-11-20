@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export default function SeatMap({
   seats,
@@ -11,9 +11,10 @@ export default function SeatMap({
   const [isDragging, setIsDragging] = useState(false);
 
   const seatMapRef = useRef(null);
-  const pointerRef = useRef(null);
   const dragRef = useRef(null);
   const previewRef = useRef([]);
+  const pointerPositionRef = useRef(null);
+  const manuallyPositionedRef = useRef(false);
 
   const rows = Object.groupBy(seats, (seat) => seat.row_number);
 
@@ -60,7 +61,6 @@ export default function SeatMap({
     }
 
     const group = getSeatGroup(seat, rowSeats);
-
     if (group.length === 0) return;
 
     setSelectedSeats(group);
@@ -105,33 +105,78 @@ export default function SeatMap({
     };
   }
 
-  // Placera droppen vid en ledig stol när kartan visas.
-  useEffect(() => {
-    if (!seatMapRef.current || seats.length === 0) return;
+  // Uppdatera pekarens position.
+  function updatePointerPosition(position) {
+    pointerPositionRef.current = position;
+    setPointerPosition(position);
+  }
 
-    if (pointerPosition !== null) return;
+  // Placera pekaren på en ledig stol.
+  // Välj helst en stol där hela biljettgruppen får plats.
+  useLayoutEffect(() => {
+    const map = seatMapRef.current;
+    if (!map || seats.length === 0) return;
 
-    const availableSeat = seats.find((seat) => seat.isAvailable);
-    if (!availableSeat) return;
+    function placePointer() {
+      if (dragRef.current || manuallyPositionedRef.current) {
+        return;
+      }
 
-    const button = Array.from(
-      seatMapRef.current.querySelectorAll("[data-seat-id]"),
-    ).find((element) => element.dataset.seatId === String(availableSeat.id));
+      const availableSeat = seats.find(
+        (seat) =>
+          seat.isAvailable &&
+          (ticketCount === 0 ||
+            getSeatGroup(seat, rows[seat.row_number]).length === ticketCount),
+      );
 
-    if (!button) return;
+      if (!availableSeat) {
+        updatePointerPosition(null);
+        return;
+      }
 
-    const seatRect = button.getBoundingClientRect();
-    const mapRect = seatMapRef.current.getBoundingClientRect();
+      const button = Array.from(map.querySelectorAll("[data-seat-id]")).find(
+        (element) => element.dataset.seatId === String(availableSeat.id),
+      );
 
-    setPointerPosition({
-      x: seatRect.left + seatRect.width / 2 - mapRect.left,
-      y: seatRect.top + seatRect.height / 2 - mapRect.top,
+      if (!button) return;
+
+      const seatRect = button.getBoundingClientRect();
+      const mapRect = map.getBoundingClientRect();
+
+      const position = {
+        x: seatRect.left + seatRect.width / 2 - mapRect.left,
+        y: seatRect.top + seatRect.height / 2 - mapRect.top,
+      };
+
+      updatePointerPosition(position);
+    }
+
+    // Beräkna position efter layout.
+    const frame = requestAnimationFrame(placePointer);
+
+    // Uppdatera om stolskartans storlek förändras.
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(placePointer);
     });
-  }, [seats, pointerPosition]);
 
-  // Uppdatera vilka stolar som droppens spets pekar på.
+    observer.observe(map);
+
+    // Uppdatera även när viewporten ändras.
+    window.addEventListener("resize", placePointer);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", placePointer);
+    };
+  }, [seats, ticketCount]);
+
+  // Uppdatera vilka stolar droppens spets pekar på.
   function updatePointerSelection(x, y) {
-    const mapRect = seatMapRef.current.getBoundingClientRect();
+    const map = seatMapRef.current;
+    if (!map) return;
+
+    const mapRect = map.getBoundingClientRect();
 
     const target = findSeatAtPosition(mapRect.left + x, mapRect.top + y);
 
@@ -151,7 +196,7 @@ export default function SeatMap({
     if (
       event.pointerType !== "touch" ||
       !window.matchMedia("(max-width: 767px)").matches ||
-      !pointerPosition ||
+      !pointerPositionRef.current ||
       ticketCount === 0
     ) {
       return;
@@ -159,35 +204,43 @@ export default function SeatMap({
 
     event.preventDefault();
 
+    const position = pointerPositionRef.current;
+
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      pointerX: pointerPosition.x,
-      pointerY: pointerPosition.y,
+      pointerX: position.x,
+      pointerY: position.y,
     };
+
+    manuallyPositionedRef.current = true;
 
     setIsDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
 
-    updatePointerSelection(pointerPosition.x, pointerPosition.y);
+    updatePointerSelection(position.x, position.y);
   }
 
   function handlePointerMove(event) {
     const drag = dragRef.current;
 
-    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
 
     const map = seatMapRef.current;
     if (!map) return;
 
     const x = drag.pointerX + event.clientX - drag.startX;
+
     const y = drag.pointerY + event.clientY - drag.startY;
 
     const clampedX = Math.max(0, Math.min(map.clientWidth, x));
+
     const clampedY = Math.max(0, Math.min(map.clientHeight, y));
 
-    setPointerPosition({
+    updatePointerPosition({
       x: clampedX,
       y: clampedY,
     });
@@ -199,7 +252,9 @@ export default function SeatMap({
   function finishDrag(event, cancelled = false) {
     const drag = dragRef.current;
 
-    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return;
+    }
 
     if (!cancelled && previewRef.current.length === ticketCount) {
       setSelectedSeats([...previewRef.current]);
@@ -207,11 +262,9 @@ export default function SeatMap({
 
     dragRef.current = null;
     previewRef.current = [];
+
     setIsDragging(false);
     setHoveredSeats([]);
-
-    // pointerPosition nollställs INTE.
-    // Droppen ligger därför kvar efter att fingret släppts.
   }
 
   return (
@@ -239,6 +292,7 @@ export default function SeatMap({
             <div className="flex items-center justify-center gap-1 sm:gap-2">
               {rowSeats.map((seat) => {
                 const isSelected = selectedSeats.includes(seat.id);
+
                 const isHovered = hoveredSeats.includes(seat.id);
 
                 return (
@@ -267,10 +321,9 @@ export default function SeatMap({
           </div>
         ))}
 
-        {/* Permanent droppformad pekare för mobil */}
+        {/* Droppformad pekare för mobil */}
         {pointerPosition && (
           <div
-            ref={pointerRef}
             className="absolute z-50 md:hidden"
             style={{
               left: pointerPosition.x,
@@ -306,6 +359,7 @@ export default function SeatMap({
                 />
 
                 <circle cx="32" cy="65" r="13" fill="#FF8A3D" />
+
                 <circle cx="32" cy="65" r="5" fill="#202026" />
               </svg>
             </button>
@@ -313,6 +367,7 @@ export default function SeatMap({
         )}
       </div>
 
+      {/* Färgförklaring */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-4 text-sm sm:gap-6">
         <div className="flex items-center gap-2">
           <span className="h-5 w-5 rounded-t bg-[#EEE7D6]" />
